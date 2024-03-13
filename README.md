@@ -1,2 +1,2 @@
-# CPSC 304
-## Health Tracker Database
+# Project 304
+## Health Tracking Database
