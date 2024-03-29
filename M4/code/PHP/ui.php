@@ -184,19 +184,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
     printUsersTable($result);
 	}
 
-	function printResult($result)
-	{ //prints results from a select statement
-		echo "<br>Retrieved data from table demoTable:<br>";
-		echo "<table>";
-		echo "<tr><th>ID</th><th>Name</th></tr>";
-
-		while ($row = OCI_Fetch_Array($result, OCI_ASSOC)) {
-			echo "<tr><td>" . $row["ID"] . "</td><td>" . $row["NAME"] . "</td></tr>"; //or just use "echo $row[0]"
-		}
-
-		echo "</table>";
-	}
-
 	function connectToDB()
 	{
 		global $db_conn;
@@ -303,7 +290,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	{
 		global $db_conn;
 		$result = executePlainSQL("SELECT * FROM User_table");
-		printResult($result);
+		printUsersTable($result);
 	}
 
 	// HANDLE ALL POST ROUTES

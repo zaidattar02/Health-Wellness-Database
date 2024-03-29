@@ -40,6 +40,14 @@ BEGIN
                                  );
       END;
    END LOOP;
+   FOR cur_rec IN (SELECT * 
+                   FROM all_synonyms 
+                   WHERE table_owner IN (SELECT USER FROM dual))
+   LOOP
+      BEGIN
+         EXECUTE IMMEDIATE 'DROP PUBLIC SYNONYM ' || cur_rec.synonym_name;
+      END;
+   END LOOP;
 END;
 
 /
@@ -58,7 +66,7 @@ CREATE TABLE Device (
 
 CREATE TABLE Sleep (
     SleepID INTEGER PRIMARY KEY,
-    sleepDate DATE UNIQUE,
+    sleepDate DATE, --UNIQUE,
     Duration INTEGER,
     Bedtime INTEGER
 );
@@ -117,9 +125,7 @@ CREATE TABLE GenerateGoalsData (
     GenerateGoalsDate DATE,
     GenerateGoalsValue INTEGER,
     GoalID INTEGER,
-    DeviceID INTEGER,
     FOREIGN KEY (GoalID) REFERENCES Goals(GoalsID) --ON DELETE SET NULL ON UPDATE CASCADE,
-    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID)
 );
 
 CREATE TABLE GenerateSleepData (
@@ -155,127 +161,99 @@ CREATE TABLE InsightProvides (
     FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) ON DELETE CASCADE --ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- Insert statements go here
-
-
 
 -- POPULATE
 
-INSERT INTO User(UserID, Age, Gender)
-VALUES
-(1, 25, 'M'),
-(2, 30, 'F'),
-(3, 40, 'M'),
-(4, 35, 'F'),
-(5, 28, 'M')
+INSERT ALL
+INTO User_table VALUES (1, 25, 'M')
+INTO User_table VALUES (2, 30, 'F')
+INTO User_table VALUES (3, 40, 'M')
+INTO User_table VALUES (4, 35, 'F')
+INTO User_table VALUES (5, 28, 'M')
 
-INSERT INTO Device (DeviceID, Model)
-VALUES
-(1, 'MyFitTrackerV2'),
-(2, 'MyFitTrackerV2'),
-(3, 'MyFitTrackerV2Pro'),
-(4, 'MyFitTrackerV1'),
-(5, 'MyFitTrackerV4')
+INTO Device VALUES (1, 'MyFitTrackerV2')
+INTO Device VALUES (2, 'MyFitTrackerV2')
+INTO Device VALUES (3, 'MyFitTrackerV2Pro')
+INTO Device VALUES (4, 'MyFitTrackerV1')
+INTO Device VALUES (5, 'MyFitTrackerV4')
 
-INSERT INTO Sleep (SleepID, sleepDate, Duration, Bedtime)
-VALUES
-(1, '2024-02-01', 420, 23),
-(2, '2024-02-02', 390, 9),
-(3, '2024-02-03', 450, 22),
-(4, '2024-02-04', 480, 11),
-(5, '2024-02-05', 400, 10)
+INTO Sleep VALUES (1, '01-FEB-2024', 420, 23)
+INTO Sleep VALUES (2, '02-FEB-2024', 390, 9)
+INTO Sleep VALUES (3, '03-FEB-2024', 450, 22)
+INTO Sleep VALUES (4, '04-FEB-2024', 480, 11)
+INTO Sleep VALUES (5, '05-FEB-2024', 400, 10)
 
-INSERT INTO Recovery (RecoveryID, RecoveryScore, recoveryDate)
-VALUES (1, 80, '2024-02-01'),
-(2, 75, '2024-02-02'),
-(3, 85, '2024-02-03'),
-(4, 90, '2024-02-04'),
-(5, 82, '2024-02-05')
+INTO Recovery VALUES (1, 80, '01-FEB-2024')
+INTO Recovery VALUES (2, 75, '02-FEB-2024')
+INTO Recovery VALUES (3, 85, '03-FEB-2024')
+INTO Recovery VALUES (4, 90, '04-FEB-2024')
+INTO Recovery VALUES (5, 82, '05-FEB-2024')
 
-INSERT INTO Goals (GoalsID, startDate, End_Date, goalDescription)
-VALUES
-(1, '2024-01-01', '2024-06-30', 'Lose weight'),
-(2, '2024-01-15', '2024-07-15', 'Gain muscle'),
-(3, '2024-02-01', '2024-04-30', 'Increase recovery time'),
-(4, '2024-03-01', '2024-09-30', 'Eat healthier'),
-(5, '2024-02-15', '2024-08-15', 'Stick to a bedtime')
+INTO Goals VALUES (1, '01-JAN-2024', '30-JUN-2024', 'Lose weight')
+INTO Goals VALUES (2, '15-JAN-2024', '15-JUL-2024', 'Gain muscle')
+INTO Goals VALUES (3, '01-FEB-2024', '30-APR-2024', 'Increase recovery time')
+INTO Goals VALUES (4, '01-MAR-2024', '30-SEP-2024', 'Eat healthier')
+INTO Goals VALUES (5, '15-FEB-2024', '15-AUG-2024', 'Stick to a bedtime')
 
-INSERT INTO WeightLoss (GoalsID, TargetLoss)
-VALUES
-(1, 10),
-(4, 5),
-(5, 3),
-(2, 0),
-(3, 2)
+INTO WeightLoss VALUES (1, 10)
+INTO WeightLoss VALUES (4, 5)
+INTO WeightLoss VALUES (5, 3)
+INTO WeightLoss VALUES (2, 0)
+INTO WeightLoss VALUES (3, 2)
 
-INSERT INTO MuscleGain (GoalsID, TargetGain)
-VALUES
-(2, 5),
-(1, 2),
-(3, 10),
-(4, 3),
-(5, 7)
+INTO MuscleGain VALUES (2, 5)
+INTO MuscleGain VALUES (1, 2)
+INTO MuscleGain VALUES (3, 10)
+INTO MuscleGain VALUES (4, 3)
+INTO MuscleGain VALUES (5, 7)
 
-INSERT INTO Active (GoalsID, TargetActivity)
-VALUES
-(3, 'Soccer'),
-(5, 'Boxing'),
-(1, 'Calisthenics'),
-(2, 'Basketball'),
-(4, 'Swimming')
+INTO Active VALUES (3, 'Soccer')
+INTO Active VALUES (5, 'Boxing')
+INTO Active VALUES (1, 'Calisthenics')
+INTO Active VALUES (2, 'Basketball')
+INTO Active VALUES (4, 'Swimming')
 
-INSERT INTO NutritionInputs (NutritionID, DeviceID, UserID, Calories, NutritionInputsDate)
-VALUES
-(1, 1, 1, 2000, '2024-02-01'),
-(2, 2, 2, 1800, '2024-02-02'),
-(3, 3, 3, 2200, '2024-02-03'),
-(4, 4, 4, 1900, '2024-02-04'),
-(5, 5, 5, 2100, '2024-02-05')
+INTO NutritionInputs VALUES (1, 1, 1, 2000, '01-FEB-2024')
+INTO NutritionInputs VALUES (2, 2, 2, 1800, '02-FEB-2024')
+INTO NutritionInputs VALUES (3, 3, 3, 2200, '03-FEB-2024')
+INTO NutritionInputs VALUES (4, 4, 4, 1900, '04-FEB-2024')
+INTO NutritionInputs VALUES (5, 5, 5, 2100, '05-FEB-2024')
 
-INSERT INTO GenerateSleepData (DataID, GenerateSleepDate, GenerateSleepValue, SleepID)
-VALUES
-(1, '2024-03-01', 87, 1),
-(2, '2024-03-02', 76, 1),
-(3, '2024-03-03', 98, 2),
-(4, '2024-03-04', 57, 2),
-(5, '2024-03-05', 66, 3)
+INTO GenerateSleepData VALUES (1, '01-MAR-2024', 87, 1)
+INTO GenerateSleepData VALUES (2, '02-MAR-2024', 76, 1)
+INTO GenerateSleepData VALUES (3, '03-MAR-2024', 98, 2)
+INTO GenerateSleepData VALUES (4, '04-MAR-2024', 57, 2)
+INTO GenerateSleepData VALUES (5, '05-MAR-2024', 66, 3)
 
-INSERT INTO GenerateRecoveryData (DataID, GenerateRecoveryDate, GenerateRecoveryValue, RecoveryID)
-VALUES
-(1, '2024-03-01', 73, 1),
-(2, '2024-03-02', 64, 1),
-(3, '2024-03-03', 95, 2),
-(4, '2024-03-04', 63, 2),
-(5, '2024-03-05', 74, 3)
+INTO GenerateRecoveryData VALUES (1, '01-MAR-2024', 73, 1)
+INTO GenerateRecoveryData VALUES (2, '02-MAR-2024', 64, 1)
+INTO GenerateRecoveryData VALUES (3, '03-MAR-2024', 95, 2)
+INTO GenerateRecoveryData VALUES (4, '04-MAR-2024', 63, 2)
+INTO GenerateRecoveryData VALUES (5, '05-MAR-2024', 74, 3)
 
-INSERT INTO GenerateGoalsData (DataID, GenerateGoalsDate, GenerateGoalsValue, GoalID)
-VALUES
-(1, '2024-03-01', 97, 1),
-(2, '2024-03-02', 54, 1),
-(3, '2024-03-03', 98, 2),
-(4, '2024-03-04', 95, 2),
-(5, '2024-03-05', 60, 3)
+INTO GenerateGoalsData VALUES (1, '01-MAR-2024', 97, 1)
+INTO GenerateGoalsData VALUES (2, '02-MAR-2024', 54, 1)
+INTO GenerateGoalsData VALUES (3, '03-MAR-2024', 98, 2)
+INTO GenerateGoalsData VALUES (4, '04-MAR-2024', 95, 2)
+INTO GenerateGoalsData VALUES (5, '05-MAR-2024', 60, 3)
 
-INSERT INTO DeviceTracksData (DataID, DeviceTracksDataDate, DeviceTracksDataValue, DeviceID)
-VALUES
-(1, '2024-03-01', 97, 1),
-(2, '2024-03-02', 54, 1),
-(3, '2024-03-03', 98, 2),
-(4, '2024-03-04', 95, 2),
-(5, '2024-03-05', 60, 3)
+INTO DeviceTracksData VALUES (1, '01-MAR-2024', 97, 1)
+INTO DeviceTracksData VALUES (2, '02-MAR-2024', 54, 1)
+INTO DeviceTracksData VALUES (3, '03-MAR-2024', 98, 2)
+INTO DeviceTracksData VALUES (4, '04-MAR-2024', 95, 2)
+INTO DeviceTracksData VALUES (5, '05-MAR-2024', 60, 3)
 
-INSERT INTO InsightMonitors (InsightID, Result, InsightMonitorsDate, UserID)
-VALUES
-(1, 'You slept well last night', '2024-02-01', 1),
-(2, 'Your recovery score is improving!', '2024-02-02', 2),
-(3, 'Keep up the good work on your goals!', '2024-02-03', 3),
-(4, 'Consider adjusting your nutrition for better results', '2024-02-04', 4),
-(5, 'Remember to stretch before exercising', '2024-02-05', 5)
+INTO InsightMonitors VALUES (1, 'You slept well last night', '01-FEB-2024', 1)
+INTO InsightMonitors VALUES (2, 'Your recovery score is improving!', '02-FEB-2024', 2)
+INTO InsightMonitors VALUES (3, 'Keep up the good work on your goals!', '03-FEB-2024', 3)
+INTO InsightMonitors VALUES (4, 'Consider adjusting your nutrition for better results', '04-FEB-2024', 4)
+INTO InsightMonitors VALUES (5, 'Remember to stretch before exercising', '05-FEB-2024', 5)
 
-INSERT INTO InsightProvides (InsightID, Result, InsightProvidesDate, DeviceID)
-VALUES
-(1, 'Recovery decreased', '2024-05-01', 1),
-(2, 'Sleep duration got better', '2024-07-02', 2),
-(3, 'Bedtime becomes earlier', '2024-02-03', 3),
-(4, 'Nutrition needs more calories', '2024-02-04', 4),
-(5, 'Activity updated', '2024-02-05', 5)
+INTO InsightProvides VALUES (1, 'Recovery decreased', '01-FEB-2024', 1)
+INTO InsightProvides VALUES (2, 'Sleep duration got better', '02-FEB-2024', 2)
+INTO InsightProvides VALUES (3, 'Bedtime becomes earlier', '03-FEB-2024', 3)
+INTO InsightProvides VALUES (4, 'Nutrition needs more calories', '04-FEB-2024', 4)
+INTO InsightProvides VALUES (5, 'Activity updated', '05-FEB-2024', 5)
+
+SELECT 1 FROM DUAL;
+
