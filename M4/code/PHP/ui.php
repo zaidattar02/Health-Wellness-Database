@@ -51,7 +51,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	<h2>Reset</h2>
 	<p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
 
-	<form method="POST" action="oracle-template.php">
+	<form method="POST" action="ui.php">
 		<!-- "action" specifies the file or page that will receive the form data for processing. As with this example, it can be this same file. -->
 		<input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
 		<p><input type="submit" value="Reset" name="reset"></p>
@@ -78,7 +78,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	<h2>Update Name in DemoTable</h2>
 	<p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
 
-	<form method="POST" action="oracle-template.php">
+	<form method="POST" action="ui.php">
 		<input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
 		Old Name: <input type="text" name="oldName"> <br /><br />
 		New Name: <input type="text" name="newName"> <br /><br />
@@ -89,7 +89,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	<hr />
 
 	<h2>Count the Tuples in DemoTable</h2>
-	<form method="GET" action="oracle-template.php">
+	<form method="GET" action="ui.php">
 		<input type="hidden" id="countTupleRequest" name="countTupleRequest">
 		<input type="submit" name="countTuples"></p>
 	</form>
@@ -97,7 +97,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	<hr />
 
 	<h2>Display Tuples in DemoTable</h2>
-	<form method="GET" action="oracle-template.php">
+	<form method="GET" action="ui.php">
 		<input type="hidden" id="displayTuplesRequest" name="displayTuplesRequest">
 		<input type="submit" name="displayTuples"></p>
 	</form>
@@ -175,6 +175,13 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 				$success = False;
 			}
 		}
+	}
+
+	function handleDisplayUsersRequest() 
+	{
+    global $db_conn;
+    $result = executePlainSQL("SELECT * FROM User_table");
+    printUsersTable($result);
 	}
 
 	function printResult($result)
@@ -258,11 +265,11 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			$tuple
 		);
 
-		echo "<br>User BEFORE INSERT:</br>";
+		echo "<br>User_table BEFORE INSERT:</br>";
         printInsertRequestResult();
 
 		executeBoundSQL("
-            INSERT INTO User (
+            INSERT INTO User_table (
                 UserID,
                 Age,
                 Gender
@@ -274,7 +281,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
             ",
         $alltuples);
 
-		echo "<br>User AFTER INSERT:</br>";
+		echo "<br>User_table AFTER INSERT:</br>";
         printInsertRequestResult();
 
 
@@ -285,7 +292,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	{
 		global $db_conn;
 
-		$result = executePlainSQL("SELECT Count(*) FROM demoTable");
+		$result = executePlainSQL("SELECT Count(*) FROM User_table");
 
 		if (($row = oci_fetch_row($result)) != false) {
 			echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
@@ -295,7 +302,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	function handleDisplayRequest()
 	{
 		global $db_conn;
-		$result = executePlainSQL("SELECT * FROM demoTable");
+		$result = executePlainSQL("SELECT * FROM User_table");
 		printResult($result);
 	}
 
@@ -338,6 +345,27 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	}
 
 	// End PHP parsing and send the rest of the HTML content
+	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+		handlePOSTRequest();
+	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
+		handleGETRequest();
+	} else if (isset($_GET['displayUsersRequest'])) {
+		handleDisplayUsersRequest();
+	}
+	
+	function printUsersTable($result)
+	{
+		echo "<h2>Displaying Users</h2>";
+		echo "<table border='1'>";
+		echo "<tr><th>User ID</th><th>Age</th><th>Gender</th></tr>";
+	
+		while ($row = OCI_Fetch_Array($result, OCI_ASSOC)) {
+			echo "<tr><td>" . $row["USERID"] . "</td><td>" . $row["AGE"] . "</td><td>" . $row["GENDER"] . "</td></tr>"; 
+		}
+	
+		echo "</table>";
+	}
+
 	?>
 </body>
 
