@@ -60,35 +60,31 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	<hr />
 
 	<h2>Insert New User</h2>
-    <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-        <label for="UserID">UserID:</label>
-        <input type="text" id="UserID" name="UserID"><br><br>
-
-        <label for="Age">Age:</label>
-        <input type="text" id="Age" name="Age"><br><br>
-
-        <label for="Gender">Gender:</label>
-        <input type="text" id="Gender" name="Gender"><br><br>
-
-        <input type="submit" name="submit" value="Submit">
-    </form>
+    <form method="POST" action="ui.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            User ID: <input type="text" name="insertUserID"> <br /><br />
+            Age: <input type="text" name="insertUserAge"> <br /><br />
+            Gender: <input type="text" name="insertUserGender"> <br /><br />
+            <input type="submit" value="Insert" name="insertSubmit"></p>
+        </form>
 
 	<hr />
 
-	<h2>Update Name in DemoTable</h2>
+	<h2>Update User info</h2>
 	<p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
 
 	<form method="POST" action="ui.php">
 		<input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-		Old Name: <input type="text" name="oldName"> <br /><br />
-		New Name: <input type="text" name="newName"> <br /><br />
+		UserID: <input type="text" name="updateUserID"> <br /><br />
+		New Age: <input type="text" name="updateAge"> <br /><br />
+		New Gender: <input type="text" name="updateGender"> <br /><br />
 
 		<input type="submit" value="Update" name="updateSubmit"></p>
 	</form>
 
 	<hr />
 
-	<h2>Count the Tuples in DemoTable</h2>
+	<h2>Count the Tuples in User table</h2>
 	<form method="GET" action="ui.php">
 		<input type="hidden" id="countTupleRequest" name="countTupleRequest">
 		<input type="submit" name="countTuples"></p>
@@ -96,7 +92,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	<hr />
 
-	<h2>Display Tuples in DemoTable</h2>
+	<h2>Display Tuples in User table</h2>
 	<form method="GET" action="ui.php">
 		<input type="hidden" id="displayTuplesRequest" name="displayTuplesRequest">
 		<input type="submit" name="displayTuples"></p>
@@ -177,13 +173,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	function handleDisplayUsersRequest() 
-	{
-    global $db_conn;
-    $result = executePlainSQL("SELECT * FROM User_table");
-    printUsersTable($result);
-	}
-
 	function connectToDB()
 	{
 		global $db_conn;
@@ -217,12 +206,30 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	{
 		global $db_conn;
 
-		$old_name = $_POST['oldName'];
-		$new_name = $_POST['newName'];
+            $tuple = array (
+                ":UserID" => $_POST['updateUserID'],
+                ":Age" => $_POST['updateAge'],
+                ":Gender" => $_POST['updateGender'],
+            );
 
-		// you need the wrap the old name and new name values with single quotations
-		executePlainSQL("UPDATE demoTable SET name='" . $new_name . "' WHERE name='" . $old_name . "'");
-		oci_commit($db_conn);
+            $alltuples = array (
+                $tuple
+            );
+
+			// echo "<br>RESULT BEFORE UPDATE:</br>";
+			// printUpdateRequestResult();
+
+			executeBoundSQL("
+				UPDATE User_table U
+				SET U.Age = :Age, U.Gender = :Gender
+				WHERE U.UserID = :UserID
+				
+			", $alltuples);
+
+			// echo "<br>RESULT AFTER UPDATE:</br>";
+			// printUpdateRequestResult();
+            
+            oci_commit($db_conn);
 	}
 
 	function handleResetRequest()
@@ -244,8 +251,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		//Getting the values from user and insert data into the table
 		$tuple = array (
             ":UserID" => $_POST['insertUserID'],
-            ":Age" => $_POST['insertAge'],
-            ":Gender" => $_POST['insertGender'],
+            ":Age" => $_POST['insertUserAge'],
+            ":Gender" => $_POST['insertUserGender'],
         );
 
 		$alltuples = array(
@@ -264,7 +271,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
             VALUES (
                 :UserID,
                 :Age,
-                :Gender
+                :Gender)
             ",
         $alltuples);
 
@@ -293,8 +300,15 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		printUsersTable($result);
 	}
 
-	// HANDLE ALL POST ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
+	// HANDLERS
+
+	function handleDisplayUsersRequest() 
+	{
+    global $db_conn;
+    $result = executePlainSQL("SELECT * FROM User_table");
+    printUsersTable($result);
+	}
+
 	function handlePOSTRequest()
 	{
 		if (connectToDB()) {
@@ -310,8 +324,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	// HANDLE ALL GET ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
+	
 	function handleGETRequest()
 	{
 		if (connectToDB()) {
@@ -325,21 +338,29 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
-		handlePOSTRequest();
-	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
-		handleGETRequest();
+	// PRINTERS
+
+	function printInsertRequestResult() {
+		$result = executePlainSQL("SELECT * FROM User_table");
+		echo "<br>Retrieved data from User table:<br>";
+		echo "<table>";
+		echo "
+			<tr>
+				<th>User ID</th>
+				<th>Age</th>
+				<th>Gender</th>
+			</tr>";
+
+		while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
+			echo "<tr>" . 
+					"<td>" . $row[0] . "</td>" . 
+					"<td>" . $row[1] . "</td>" . 
+					"<td>" . $row[2] . "</td>" . 
+				"<tr>";
+		}
+		echo "</table>";
 	}
 
-	// End PHP parsing and send the rest of the HTML content
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
-		handlePOSTRequest();
-	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
-		handleGETRequest();
-	} else if (isset($_GET['displayUsersRequest'])) {
-		handleDisplayUsersRequest();
-	}
-	
 	function printUsersTable($result)
 	{
 		echo "<h2>Displaying Users</h2>";
@@ -351,6 +372,16 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	
 		echo "</table>";
+	}
+
+
+	// Handler Fetcher
+	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+		handlePOSTRequest();
+	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
+		handleGETRequest();
+	} else if (isset($_GET['displayUsersRequest'])) {
+		handleDisplayUsersRequest();
 	}
 
 	?>
