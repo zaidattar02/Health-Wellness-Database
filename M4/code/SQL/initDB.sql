@@ -56,7 +56,9 @@ END;
 CREATE TABLE User_table (
     UserID INTEGER PRIMARY KEY,
     Age INTEGER,
-    Gender CHAR(1)
+    Gender CHAR(1),
+    Email CHAR(50) UNIQUE,
+    UserWeight INTEGER
 );
 
 CREATE TABLE Device (
@@ -66,7 +68,7 @@ CREATE TABLE Device (
 
 CREATE TABLE Sleep (
     SleepID INTEGER PRIMARY KEY,
-    sleepDate DATE, --UNIQUE,
+    sleepDate DATE UNIQUE,
     Duration INTEGER,
     Bedtime INTEGER
 );
@@ -112,36 +114,20 @@ CREATE TABLE NutritionInputs (
     FOREIGN KEY (UserID) REFERENCES User_table(UserID)
 );
 
-CREATE TABLE GenerateRecoveryData (
+CREATE SEQUENCE NutritionID_seq START WITH 6 INCREMENT BY 1;
+
+CREATE TABLE GenerateData (
     DataID INTEGER PRIMARY KEY,
-    GenerateRecoveryDate DATE,
-    GenerateRecoveryValue INTEGER,
+    GoalsID INTEGER,
     RecoveryID INTEGER,
-    FOREIGN KEY (RecoveryID) REFERENCES Recovery(RecoveryID) --ON DELETE SET NULL ON UPDATE CASCADE
-);
-
-CREATE TABLE GenerateGoalsData (
-    DataID INTEGER PRIMARY KEY,
-    GenerateGoalsDate DATE,
-    GenerateGoalsValue INTEGER,
-    GoalID INTEGER,
-    FOREIGN KEY (GoalID) REFERENCES Goals(GoalsID) --ON DELETE SET NULL ON UPDATE CASCADE,
-);
-
-CREATE TABLE GenerateSleepData (
-    DataID INTEGER PRIMARY KEY,
-    GenerateSleepDate DATE,
-    GenerateSleepValue INTEGER,
     SleepID INTEGER,
-    FOREIGN KEY (SleepID) REFERENCES Sleep(SleepID) --ON DELETE SET NULL ON UPDATE CASCADE
-);
-
-CREATE TABLE DeviceTracksData (
-    DataID INTEGER PRIMARY KEY,
-    DeviceTracksDataDate DATE,
-    DeviceTracksDataValue INTEGER,
     DeviceID INTEGER,
-    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) --ON DELETE SET NULL ON UPDATE CASCADE
+    Score INTEGER,
+    GenerateDataDate DATE, 
+    FOREIGN KEY (SleepID) REFERENCES Sleep(SleepID), --ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (RecoveryID) REFERENCES Recovery(RecoveryID),
+    FOREIGN KEY (GoalsID) REFERENCES Goals(GoalsID),
+    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID)
 );
 
 CREATE TABLE InsightMonitors (
@@ -165,11 +151,11 @@ CREATE TABLE InsightProvides (
 -- POPULATE
 
 INSERT ALL
-INTO User_table VALUES (1, 25, 'M')
-INTO User_table VALUES (2, 30, 'F')
-INTO User_table VALUES (3, 40, 'M')
-INTO User_table VALUES (4, 35, 'F')
-INTO User_table VALUES (5, 28, 'M')
+INTO User_table VALUES (1, 25, 'M', 'omar@gmail.com', 75)
+INTO User_table VALUES (2, 30, 'F', 'julie@gmail.com', 59)
+INTO User_table VALUES (3, 40, 'M', 'seif@gmail.com', 86)
+INTO User_table VALUES (4, 35, 'F', 'sara@gmail.com', 62)
+INTO User_table VALUES (5, 28, 'M', 'zaid@gmail.com', 68)
 
 INTO Device VALUES (1, 'MyFitTrackerV2')
 INTO Device VALUES (2, 'MyFitTrackerV2')
@@ -219,29 +205,11 @@ INTO NutritionInputs VALUES (3, 3, 3, 2200, '03-FEB-2024')
 INTO NutritionInputs VALUES (4, 4, 4, 1900, '04-FEB-2024')
 INTO NutritionInputs VALUES (5, 5, 5, 2100, '05-FEB-2024')
 
-INTO GenerateSleepData VALUES (1, '01-MAR-2024', 87, 1)
-INTO GenerateSleepData VALUES (2, '02-MAR-2024', 76, 1)
-INTO GenerateSleepData VALUES (3, '03-MAR-2024', 98, 2)
-INTO GenerateSleepData VALUES (4, '04-MAR-2024', 57, 2)
-INTO GenerateSleepData VALUES (5, '05-MAR-2024', 66, 3)
-
-INTO GenerateRecoveryData VALUES (1, '01-MAR-2024', 73, 1)
-INTO GenerateRecoveryData VALUES (2, '02-MAR-2024', 64, 1)
-INTO GenerateRecoveryData VALUES (3, '03-MAR-2024', 95, 2)
-INTO GenerateRecoveryData VALUES (4, '04-MAR-2024', 63, 2)
-INTO GenerateRecoveryData VALUES (5, '05-MAR-2024', 74, 3)
-
-INTO GenerateGoalsData VALUES (1, '01-MAR-2024', 97, 1)
-INTO GenerateGoalsData VALUES (2, '02-MAR-2024', 54, 1)
-INTO GenerateGoalsData VALUES (3, '03-MAR-2024', 98, 2)
-INTO GenerateGoalsData VALUES (4, '04-MAR-2024', 95, 2)
-INTO GenerateGoalsData VALUES (5, '05-MAR-2024', 60, 3)
-
-INTO DeviceTracksData VALUES (1, '01-MAR-2024', 97, 1)
-INTO DeviceTracksData VALUES (2, '02-MAR-2024', 54, 1)
-INTO DeviceTracksData VALUES (3, '03-MAR-2024', 98, 2)
-INTO DeviceTracksData VALUES (4, '04-MAR-2024', 95, 2)
-INTO DeviceTracksData VALUES (5, '05-MAR-2024', 60, 3)
+INTO GenerateData VALUES (1, 1, 1, 1, 1, 99, '01-MAR-2020')
+INTO GenerateData VALUES (2, 2, 2, 2, 1, 80, '02-MAR-2020')
+INTO GenerateData VALUES (3, 3, 3, 3, 3, 99, '03-MAR-2020')
+INTO GenerateData VALUES (4, 4, 4, 4, 1, 99, '04-MAR-2020')
+INTO GenerateData VALUES (5, 5, 5, 5, 1, 99, '05-MAR-2020')
 
 INTO InsightMonitors VALUES (1, 'You slept well last night', '01-FEB-2024', 1)
 INTO InsightMonitors VALUES (2, 'Your recovery score is improving!', '02-FEB-2024', 2)
