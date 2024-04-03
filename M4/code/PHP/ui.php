@@ -59,36 +59,33 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	<hr />
 
-	<h2>Insert New User</h2>
-    <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-        <label for="UserID">UserID:</label>
-        <input type="text" id="UserID" name="UserID"><br><br>
-
-        <label for="Age">Age:</label>
-        <input type="text" id="Age" name="Age"><br><br>
-
-        <label for="Gender">Gender:</label>
-        <input type="text" id="Gender" name="Gender"><br><br>
-
-        <input type="submit" name="submit" value="Submit">
-    </form>
+	<h2>Insert Your Nutrition Log for the day</h2>
+    <form method="POST" action="ui.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            User ID: <input type="text" name="insertUserID"> <br /><br />
+			Device ID: <input type="text" name="insertDeviceID"> <br /><br />
+            Calories: <input type="text" name="insertCalories"> <br /><br />
+			Date(DD-MMM-YYYY): <input type="text" name="insertDate"> <br /><br />
+            <input type="submit" value="Insert" name="insertSubmit"></p>
+        </form>
 
 	<hr />
 
-	<h2>Update Name in DemoTable</h2>
+	<h2>Update User info</h2>
 	<p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
 
 	<form method="POST" action="ui.php">
 		<input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-		Old Name: <input type="text" name="oldName"> <br /><br />
-		New Name: <input type="text" name="newName"> <br /><br />
+		UserID: <input type="text" name="updateUserID"> <br /><br />
+		New Email: <input type="text" name="updateEmail"> <br /><br />
+		New Weight: <input type="text" name="updateWeight"> <br /><br />
 
 		<input type="submit" value="Update" name="updateSubmit"></p>
 	</form>
 
 	<hr />
 
-	<h2>Count the Tuples in DemoTable</h2>
+	<h2>Count the Tuples in User table</h2>
 	<form method="GET" action="ui.php">
 		<input type="hidden" id="countTupleRequest" name="countTupleRequest">
 		<input type="submit" name="countTuples"></p>
@@ -96,10 +93,11 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	<hr />
 
-	<h2>Display Tuples in DemoTable</h2>
-	<form method="GET" action="ui.php">
-		<input type="hidden" id="displayTuplesRequest" name="displayTuplesRequest">
-		<input type="submit" name="displayTuples"></p>
+	<h2>Display Tuples in User table</h2>
+	<form method="POST" action="ui.php">
+		<input type="hidden" id="displayQueryRequest" name="displayQueryRequest">
+		UserID: <input type="text" name="displayUserID"> <br /><br />
+		<input type="submit" name="displaySubmit"></p>
 	</form>
 
 
@@ -177,13 +175,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	function handleDisplayUsersRequest() 
-	{
-    global $db_conn;
-    $result = executePlainSQL("SELECT * FROM User_table");
-    printUsersTable($result);
-	}
-
 	function connectToDB()
 	{
 		global $db_conn;
@@ -217,12 +208,30 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	{
 		global $db_conn;
 
-		$old_name = $_POST['oldName'];
-		$new_name = $_POST['newName'];
+            $tuple = array (
+                ":UserID" => $_POST['updateUserID'],
+                ":Email" => $_POST['updateEmail'],
+                ":UserWeight" => $_POST['updateWeight'],
+            );
 
-		// you need the wrap the old name and new name values with single quotations
-		executePlainSQL("UPDATE demoTable SET name='" . $new_name . "' WHERE name='" . $old_name . "'");
-		oci_commit($db_conn);
+            $alltuples = array (
+                $tuple
+            );
+
+			// echo "<br>RESULT BEFORE UPDATE:</br>";
+			// printUpdateRequestResult();
+
+			executeBoundSQL("
+				UPDATE User_table U
+				SET U.Email = :Email, U.UserWeight = :UserWeight
+				WHERE U.UserID = :UserID
+				
+			", $alltuples);
+
+			// echo "<br>RESULT AFTER UPDATE:</br>";
+			// printUpdateRequestResult();
+            
+            oci_commit($db_conn);
 	}
 
 	function handleResetRequest()
@@ -243,28 +252,49 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 		//Getting the values from user and insert data into the table
 		$tuple = array (
+			":DeviceID" => $_POST['insertDeviceID'],
             ":UserID" => $_POST['insertUserID'],
-            ":Age" => $_POST['insertAge'],
-            ":Gender" => $_POST['insertGender'],
+            ":Calories" => $_POST['insertCalories'],
+			":inputDate" => $_POST['insertDate'],
         );
 
-		$alltuples = array(
+		$alltuples = array (
 			$tuple
 		);
+
+		// echo "DeviceID from the form: " . $tuple[":DeviceID"];
+		// echo "UserID from the form: " . $tuple[":UserID"];
+		// echo "Calories from the form: " . $tuple[":Calories"];
+		// echo "Date from the form: " . $tuple[":inputDate"];
+
+
+		if (!doesForeignKeyExist('User_table', 'UserID', $tuple[":UserID"])) {
+			echo "Error: No such User ID found.";
+			return;
+		}
+
+		if (!doesForeignKeyExist('Device', 'DeviceID', $tuple[":DeviceID"])) {
+			echo "Error: No such Device ID found.";
+			return;
+		}
 
 		echo "<br>User_table BEFORE INSERT:</br>";
         printInsertRequestResult();
 
 		executeBoundSQL("
-            INSERT INTO User_table (
+            INSERT INTO NutritionInputs (
+                NutritionID,
+                DeviceID,
                 UserID,
-                Age,
-                Gender
+				Calories,
+				NutritionInputsDate
             )
             VALUES (
+				NutritionID_seq.NEXTVAL,
+                :DeviceID,
                 :UserID,
-                :Age,
-                :Gender
+                :Calories,
+				:inputDate)
             ",
         $alltuples);
 
@@ -273,6 +303,27 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 
 		oci_commit($db_conn);
+	}
+
+	function doesForeignKeyExist($tableName, $columnName, $value) 
+	{
+		global $db_conn;
+
+		// Prepare the SQL query to check the existence of the key
+		$sql = "SELECT COUNT(*) FROM " . $tableName . " WHERE " . $columnName . " = :value";
+
+		$statement = oci_parse($db_conn, $sql);
+		oci_bind_by_name($statement, ":value", $value);
+
+		// Execute the query
+		oci_execute($statement, OCI_DEFAULT);
+
+		// Fetch the result
+		if ($row = oci_fetch_array($statement)) {
+			// If count is more than 0, the foreign key exists
+			return $row[0] > 0;
+		}
+		return false; // In case the query fails or count is 0
 	}
 
 	function handleCountRequest()
@@ -286,15 +337,49 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	function handleDisplayRequest()
+	function handleDisplayRequest() 
 	{
-		global $db_conn;
-		$result = executePlainSQL("SELECT * FROM User_table");
-		printUsersTable($result);
-	}
+    global $db_conn;
+    
+    // Check if displayUserID is set in POST
+    if (isset($_POST['displayUserID'])) {
+        $userId = $_POST['displayUserID'];
 
-	// HANDLE ALL POST ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
+        // echo "Searching for UserID: " . $userId . "<br>"; // Debugging output
+
+        $tuple = array (
+            ":UserID" => $userId
+        );
+
+        $alltuples = array (
+            $tuple
+        );
+
+        // Formulate SQL query
+        $sql = "SELECT *
+                FROM User_table U, InsightMonitors I
+                WHERE U.UserID = $userId AND I.UserID = U.UserID";
+
+        // echo "SQL Query: " . $sql . "<br>"; // Debugging output
+
+        // Execute SQL query
+        $result = executePlainSQL($sql, $alltuples);
+
+        // Check if result is not null before printing
+        if ($result) {
+            // Call printUsersTable function
+            printUsersTable($result);
+        } else {
+            // Handle case when result is null
+            echo "No data found for UserID: " . $userId;
+        }
+    } else {
+        // Handle case when displayUserID is not set in POST
+        echo "UserID not provided.";
+    }
+	}
+	// HANDLERS
+
 	function handlePOSTRequest()
 	{
 		if (connectToDB()) {
@@ -304,14 +389,15 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 				handleUpdateRequest();
 			} else if (array_key_exists('insertQueryRequest', $_POST)) {
 				handleInsertRequest();
+			} else if (array_key_exists('displayQueryRequest', $_POST)) {
+				handleDisplayRequest();
 			}
 
 			disconnectFromDB();
 		}
 	}
 
-	// HANDLE ALL GET ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
+	
 	function handleGETRequest()
 	{
 		if (connectToDB()) {
@@ -325,33 +411,68 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
-		handlePOSTRequest();
-	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
-		handleGETRequest();
+	// PRINTERS
+
+	function printInsertRequestResult() 
+	{
+		$result = executePlainSQL("SELECT * FROM NutritionInputs ORDER BY NutritionID");
+		echo "<br>Retrieved data from Nutrition table:<br>";
+		echo "<table>";
+		echo "
+			<tr>
+				<th>Nutrition ID</th>
+				<th>Device ID</th>
+				<th>User ID</th>
+				<th>Calories</th>
+				<th>Date</th>
+			</tr>";
+
+		while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
+			echo "<tr>" . 
+					"<td>" . $row[0] . "</td>" . 
+					"<td>" . $row[1] . "</td>" . 
+					"<td>" . $row[2] . "</td>" . 
+					"<td>" . $row[3] . "</td>" . 
+					"<td>" . $row[4] . "</td>" . 
+				"<tr>";
+		}
+		echo "</table>";
 	}
 
-	// End PHP parsing and send the rest of the HTML content
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
-		handlePOSTRequest();
-	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
-		handleGETRequest();
-	} else if (isset($_GET['displayUsersRequest'])) {
-		handleDisplayUsersRequest();
-	}
-	
 	function printUsersTable($result)
 	{
 		echo "<h2>Displaying Users</h2>";
 		echo "<table border='1'>";
-		echo "<tr><th>User ID</th><th>Age</th><th>Gender</th></tr>";
+		echo "<tr><th>User ID</th>
+		<th>Age</th>
+		<th>Gender</th>
+		<th>Email</th>
+		<th>Weight</th>
+		<th>Insight</th>
+		<th>Date</th></tr>";
 	
 		while ($row = OCI_Fetch_Array($result, OCI_ASSOC)) {
-			echo "<tr><td>" . $row["USERID"] . "</td><td>" . $row["AGE"] . "</td><td>" . $row["GENDER"] . "</td></tr>"; 
+			echo 
+				"<tr><td>" . $row["USERID"] . 
+				"</td><td>" . $row["AGE"] . 
+				"</td><td>" . $row["GENDER"] . 
+				"</td><td>" . $row["EMAIL"] . 
+				"</td><td>" . $row["USERWEIGHT"] . 
+				"</td><td>" . $row["RESULT"] . 
+				"</td><td>" . $row["INSIGHTMONITORSDATE"] . 
+				"</td></tr>"; 
 		}
 	
 		echo "</table>";
 	}
+
+
+	// Handler Fetcher
+	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['displaySubmit'])) {
+		handlePOSTRequest();
+	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
+		handleGETRequest();
+	} 
 
 	?>
 </body>
