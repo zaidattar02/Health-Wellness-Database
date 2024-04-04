@@ -150,6 +150,15 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 <hr />
 
+<h2>Join: Find the emails and ages of users who sleep at</h2>
+<form method="POST" action="ui.php">
+    <input type="hidden" id="joinQueryRequest" name="joinQueryRequest">
+	Bedtime: <input type="text" name="bedtimeJoin"> <br /><br />
+	<input type="submit" value="Join" name="joinSubmit"></p>
+</form>
+
+<hr />
+
 
 	<?php
 	// The following code will be parsed as PHP
@@ -559,6 +568,39 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			echo "Filtering conditions not provided.";
 		}
 	}
+
+	function handleJoinRequest()
+{
+    global $db_conn;
+
+    $tuple = array(
+        ":Bedtime" => $_POST['bedtimeJoin']
+    );
+
+	$bedtime = $_POST['bedtimeJoin'];
+
+    $alltuples = array(
+        $tuple
+    );
+
+    $result = "
+	SELECT U.Email, U.Age, S.Bedtime
+	FROM Sleep S, GenerateData GD, User_table U, NutritionInputs NI
+	WHERE U.UserID = NI.UserID AND  NI.DeviceID = GD.DeviceID 
+	AND GD.SleepID = S.SleepID AND S.Bedtime = $bedtime";
+
+    $resultResource = executePlainSQL($result);
+
+    if ($resultResource) {
+        printResult($resultResource);
+    } else {
+        echo "No results found.";
+    }
+
+    oci_commit($db_conn);
+}
+
+	
 	
 	function handlePOSTRequest()
 	{
@@ -580,6 +622,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 				handleSelectRequest();
 			} elseif (array_key_exists('deleteDeviceRequest', $_POST)) {
 				handleDeleteDeviceRequest();
+			} elseif (array_key_exists('joinQueryRequest', $_POST)) {
+				handleJoinRequest();
 			}
 
 			disconnectFromDB();
@@ -654,7 +698,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	// Handler Fetcher
 	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['submitAggregate']) 
-	|| isset($_POST['submitMultiDeviceUsers']) || isset($_POST['displaySubmit']) || isset($_POST['selectSubmit']) || isset($_POST['deleteSubmit'])) {
+	|| isset($_POST['submitMultiDeviceUsers']) || isset($_POST['displaySubmit']) || isset($_POST['selectSubmit']) || isset($_POST['deleteSubmit']) 
+	|| isset($_POST['joinSubmit'])) {
 		handlePOSTRequest();
 	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
 		handleGETRequest();
