@@ -138,63 +138,13 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 <h2>Select Insights With the following conditions</h2>
 <form method="POST" action="ui.php">
     <input type="hidden" id="selectQueryRequest" name="selectQueryRequest">
-	<div>
-        User ID: <input type="text" name="userID">
-    </div>
-    <div>
-        <label>Sleep Duration:</label>
-        <select name="sleepDurationOperator">
-            <option value="=">=</option>
-            <option value=">">></option>
-            <option value="<"><</option>
+	UserID: <input type="text" name="userSelect"> <br /><br />
+	Calories: <input type="text" name="caloriesSelect"> <br /><br />
+	<select name="caloriesOperator">
+            <option value="AND">AND</option>
+            <option value="OR">OR</option>
         </select>
-        <input type="text" name="sleepDurationValue">
-    </div>
-    <div>
-        <label>Calories:</label>
-        <select name="caloriesOperator">
-            <option value="=">=</option>
-            <option value=">">></option>
-            <option value="<"><</option>
-        </select>
-        <input type="text" name="caloriesValue">
-    </div>
-	<div>
-        <label>Recovery Score:</label>
-        <select name="caloriesOperator">
-            <option value="=">=</option>
-            <option value=">">></option>
-            <option value="<"><</option>
-        </select>
-        <input type="text" name="caloriesValue">
-    </div>
-	<div>
-        <label>Weight Loss Goal:</label>
-        <select name="caloriesOperator">
-            <option value="=">=</option>
-            <option value=">">></option>
-            <option value="<"><</option>
-        </select>
-        <input type="text" name="caloriesValue">
-    </div>
-	<div>
-        <label>Weight Gain Goal:</label>
-        <select name="caloriesOperator">
-            <option value="=">=</option>
-            <option value=">">></option>
-            <option value="<"><</option>
-        </select>
-        <input type="text" name="caloriesValue">
-    </div>
-	<div>
-        <label>Activity Goal:</label>
-        <select name="caloriesOperator">
-            <option value="=">=</option>
-            <option value=">">></option>
-            <option value="<"><</option>
-        </select>
-        <input type="text" name="caloriesValue">
-    </div>
+	Date: <input type="text" name="dateSelect"> <br /><br />
 	<input type="submit" value="Select" name="selectSubmit"></p>
 </form>
 
@@ -373,17 +323,17 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
             oci_commit($db_conn);
 	}
 
-	function handleResetRequest()
-	{
-		global $db_conn;
-		// Drop old table
-		executePlainSQL("DROP TABLE demoTable");
+	// function handleResetRequest()
+	// {
+	// 	global $db_conn;
+	// 	// Drop old table
+	// 	executePlainSQL("DROP TABLE demoTable");
 
-		// Create new table
-		echo "<br> creating new table <br>";
-		executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
-		oci_commit($db_conn);
-	}
+	// 	// Create new table
+	// 	echo "<br> creating new table <br>";
+	// 	executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
+	// 	oci_commit($db_conn);
+	// }
 
 	function handleInsertRequest()
 	{
@@ -553,6 +503,63 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
+	function handleSelectRequest() {
+		global $db_conn;
+	
+		// Check if form is submitted
+		if (isset($_POST['selectSubmit'])) {
+			$userID = $_POST['userSelect'];
+	
+			// Validate User ID
+			if (empty($userID)) {
+				echo "Please provide a User ID.";
+				return;
+			}
+	
+			$calories = $_POST['caloriesSelect'];
+			$date = $_POST['dateSelect'];
+			$operator = $_POST['caloriesOperator'];
+	
+			// Define attribute names and corresponding table names
+			$tuple = array(
+				":Calories" => $_POST['caloriesSelect'],
+				":Date" => $_POST['dateSelect'],
+			);
+	
+			$alltuples = array(
+				$tuple
+			);
+	
+			// Formulate SQL query
+			if ($operator == 'AND') {
+				$sql = "SELECT IM.UserID, IM.Result, IM.InsightMonitorsDate, NI.Calories 
+						FROM InsightMonitors IM, NutritionInputs NI
+						WHERE IM.UserID = $userID AND NI.UserID = IM.UserID AND NI.Calories = $calories AND IM.InsightMonitorsDate = TO_DATE('$date', 'DD-MON-YYYY')
+						";
+			} else {
+				$sql = "SELECT IM.UserID, IM.Result, IM.InsightMonitorsDate, NI.Calories 
+						FROM InsightMonitors IM, NutritionInputs NI
+						WHERE IM.UserID = $userID AND NI.UserID = IM.UserID AND (NI.Calories = $calories OR IM.InsightMonitorsDate = TO_DATE('$date', 'DD-MON-YYYY'))
+						";
+			}
+	
+			// Execute SQL query
+			$result = executePlainSQL($sql);
+	
+			// Check if result is not null before printing
+			if ($result) {
+				// Call printResult function
+				printResult($result);
+			} else {
+				// Handle case when result is null
+				echo "No insights found based on the specified conditions.";
+			}
+		} else {
+			// Handle case when form is not submitted
+			echo "Filtering conditions not provided.";
+		}
+	}
+	
 	function handlePOSTRequest()
 	{
 		echo "handlePOSTRequest called<br>";
@@ -589,80 +596,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			// }
 
 			disconnectFromDB();
-		}
-	}
-
-	function handleSelectRequest() {
-		global $db_conn;
-	
-		// Check if form is submitted
-		if (isset($_POST['selectSubmit'])) {
-			$userID = $_POST['userID'];
-	
-			// Validate User ID
-			if (empty($userID)) {
-				echo "Please provide a User ID.";
-				return;
-			}
-	
-			// Initialize an array to store filtering conditions
-			$conditions = array();
-	
-			// Define attribute names and corresponding table names
-			$attributes = array(
-				"Duration" => "S",
-				"calories" => "N",
-				// Add other attributes here
-			);
-	
-			// Loop through each attribute
-			foreach ($attributes as $attribute => $table) {
-				$value = $_POST[$attribute];
-				$operator = $_POST[$attribute . "Operator"];
-				$logicalOperator = $_POST[$attribute . "LogicalOperator"]; // Fixed logical operator
-	
-				// Check if value is provided for the attribute
-				if (!empty($value)) {
-					// Construct the condition
-					$condition = "$table.$attribute $operator '$value'";
-	
-					// Add the condition to the array
-					$conditions[] = $condition;
-				}
-			}
-	
-			// Formulate SQL query
-			$sql = "SELECT IM.UserID, IM.Result, S.Duration, N.Calories, R.RecoveryScore, WL.TargetLoss, MG.TargetGain, A.TargetActivity 
-					FROM InsightMonitors IM, GenerateData GD, Sleep S, Recovery R, NutritionInputs N, InsightProvides IP, WeightLoss WL, Active A, MuscleGain MG
-					WHERE IM.UserID = $userID 
-					AND IM.InsightID = IP.InsightID 
-					AND IP.DeviceID = GD.DeviceID 
-					-- AND GD.SleepID = S.SleepID 
-					-- AND GD.RecoveryID = R.RecoveryID 
-					-- AND GD.GoalsID = WL.GoalsID 
-					-- AND GD.GoalsID = A.GoalsID 
-					-- AND GD.GoalsID = MG.GoalsID
-					";
-	
-			// Add additional filtering conditions
-			if (!empty($conditions)) {
-				$sql .= " AND " . implode(" $logicalOperator ", $conditions);
-			}
-	
-			// Execute SQL query
-			$result = executePlainSQL($sql);
-	
-			// Check if result is not null before printing
-			if ($result) {
-				// Call printResult function
-				printResult($result);
-			} else {
-				// Handle case when result is null
-				echo "No insights found based on the specified conditions.";
-			}
-		} else {
-			// Handle case when form is not submitted
-			echo "Filtering conditions not provided.";
 		}
 	}
 	
