@@ -110,7 +110,7 @@ CREATE TABLE NutritionInputs (
     UserID INTEGER,
     Calories INTEGER,
     NutritionInputsDate DATE,
-    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID),
+    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) ON DELETE CASCADE,
     FOREIGN KEY (UserID) REFERENCES User_table(UserID)
 );
 
@@ -124,10 +124,10 @@ CREATE TABLE GenerateData (
     DeviceID INTEGER,
     Score INTEGER,
     GenerateDataDate DATE, 
-    FOREIGN KEY (SleepID) REFERENCES Sleep(SleepID), --ON DELETE SET NULL ON UPDATE CASCADE
-    FOREIGN KEY (RecoveryID) REFERENCES Recovery(RecoveryID),
-    FOREIGN KEY (GoalsID) REFERENCES Goals(GoalsID),
-    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID)
+    FOREIGN KEY (SleepID) REFERENCES Sleep(SleepID) ON DELETE SET NULL,
+    FOREIGN KEY (RecoveryID) REFERENCES Recovery(RecoveryID) ON DELETE SET NULL,
+    FOREIGN KEY (GoalsID) REFERENCES Goals(GoalsID) ON DELETE SET NULL,
+    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) ON DELETE SET NULL
 );
 
 CREATE TABLE InsightMonitors (
