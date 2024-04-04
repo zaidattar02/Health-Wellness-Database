@@ -28,8 +28,8 @@ error_reporting(E_ALL);
 // Set some parameters
 
 // Database access configuration
-$config["dbuser"] = "ora_omardawd";			// change "cwl" to your own CWL
-$config["dbpassword"] = "a81766800";	// change to 'a' + your student number
+$config["dbuser"] = "ora_zalattar";			// change "cwl" to your own CWL
+$config["dbpassword"] = "a18135475";	// change to 'a' + your student number
 $config["dbserver"] = "dbhost.students.cs.ubc.ca:1522/stu";
 $db_conn = NULL;	// login credentials are used in connectToDB()
 
@@ -48,28 +48,49 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 </head>
 
 <body>
-	<h2>Reset</h2>
+	<!-- <h2>Reset</h2>
 	<p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
 
 	<form method="POST" action="ui.php">
-		<!-- "action" specifies the file or page that will receive the form data for processing. As with this example, it can be this same file. -->
 		<input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
 		<p><input type="submit" value="Reset" name="reset"></p>
 	</form>
 
-	<hr />
+	<hr /> -->
 
-	<h2>Insert Your Nutrition Log for the day</h2>
+	<h2>Insert Nutrition Data</h2>
     <form method="POST" action="ui.php"> <!--refresh page when submitted-->
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            User ID: <input type="text" name="insertUserID"> <br /><br />
-			Device ID: <input type="text" name="insertDeviceID"> <br /><br />
+            DeviceID: <input type="text" name="insertDeviceID"> <br /><br />
+			User ID: <input type="text" name="insertUserID"> <br /><br />
             Calories: <input type="text" name="insertCalories"> <br /><br />
-			Date(DD-MMM-YYYY): <input type="text" name="insertDate"> <br /><br />
+			Date: <input type = "text" name="insertDate"> <br /><br />
             <input type="submit" value="Insert" name="insertSubmit"></p>
         </form>
-
 	<hr />
+
+	<h2> Aggregate Calories Data</h2>
+<form method="POST" action="ui.php">
+    <select name="aggregationType">
+        <option value="MAX">Max</option>
+        <option value="MIN">Min</option>
+        <option value="AVG">Average</option>
+        <option value="COUNT">Count</option>
+    </select>
+    <input type="hidden" name="aggregateCaloriesRequest">
+    <input type="submit" value="Aggregate" name="submitAggregate">
+</form>
+
+<hr />
+
+<h2>Users with Multiple Devices</h2>
+<form method="POST" action="ui.php">
+    <input type="hidden" name="multiDeviceUsersRequest">
+    <input type="submit" value="Find Users" name="submitMultiDeviceUsers">
+</form>
+
+<hr />
+
 
 	<h2>Update User info</h2>
 	<p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
@@ -77,8 +98,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	<form method="POST" action="ui.php">
 		<input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
 		UserID: <input type="text" name="updateUserID"> <br /><br />
-		New Email: <input type="text" name="updateEmail"> <br /><br />
-		New Weight: <input type="text" name="updateWeight"> <br /><br />
+		New Age: <input type="text" name="updateAge"> <br /><br />
+		New Gender: <input type="text" name="updateGender"> <br /><br />
 
 		<input type="submit" value="Update" name="updateSubmit"></p>
 	</form>
@@ -94,10 +115,9 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	<hr />
 
 	<h2>Display Tuples in User table</h2>
-	<form method="POST" action="ui.php">
-		<input type="hidden" id="displayQueryRequest" name="displayQueryRequest">
-		UserID: <input type="text" name="displayUserID"> <br /><br />
-		<input type="submit" name="displaySubmit"></p>
+	<form method="GET" action="ui.php">
+		<input type="hidden" id="displayTuplesRequest" name="displayTuplesRequest">
+		<input type="submit" name="displayTuples"></p>
 	</form>
 
 
@@ -113,9 +133,11 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
+
 	function executePlainSQL($cmdstr)
 	{ //takes a plain (no bound variables) SQL command and executes it
-		//echo "<br>running ".$cmdstr."<br>";
+		// echo "<br>running ".$cmdstr."<br>";
+		echo "Running SQL: $cmdstr<br>";
 		global $db_conn, $success;
 
 		$statement = oci_parse($db_conn, $cmdstr);
@@ -210,8 +232,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
             $tuple = array (
                 ":UserID" => $_POST['updateUserID'],
-                ":Email" => $_POST['updateEmail'],
-                ":UserWeight" => $_POST['updateWeight'],
+                ":Age" => $_POST['updateAge'],
+                ":Gender" => $_POST['updateGender'],
             );
 
             $alltuples = array (
@@ -223,16 +245,19 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 			executeBoundSQL("
 				UPDATE User_table U
-				SET U.Email = :Email, U.UserWeight = :UserWeight
+				SET U.Age = :Age, U.Gender = :Gender
 				WHERE U.UserID = :UserID
 				
 			", $alltuples);
 
 			// echo "<br>RESULT AFTER UPDATE:</br>";
 			// printUpdateRequestResult();
-            
+
             oci_commit($db_conn);
 	}
+
+	
+	
 
 	function handleResetRequest()
 	{
@@ -261,12 +286,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		$alltuples = array (
 			$tuple
 		);
-
-		// echo "DeviceID from the form: " . $tuple[":DeviceID"];
-		// echo "UserID from the form: " . $tuple[":UserID"];
-		// echo "Calories from the form: " . $tuple[":Calories"];
-		// echo "Date from the form: " . $tuple[":inputDate"];
-
 
 		if (!doesForeignKeyExist('User_table', 'UserID', $tuple[":UserID"])) {
 			echo "Error: No such User ID found.";
@@ -305,8 +324,51 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		oci_commit($db_conn);
 	}
 
-	function doesForeignKeyExist($tableName, $columnName, $value) 
-	{
+	function handleAggregateCaloriesRequest() {
+		echo "handleAggregateCaloriesRequest called<br>";
+		global $db_conn;
+
+		$aggregationType = $_POST['aggregationType'];
+		$query = "SELECT UserID, {$aggregationType}(Calories) AS AggregatedCalories FROM NutritionInputs GROUP BY UserID ORDER BY AggregatedCalories DESC";
+
+		$result = executePlainSQL($query);
+
+		echo "<br> Calories Data: <br>";
+		echo "<table>";
+		echo "<tr><th>User ID</th><th>{$aggregationType} Calories</th></tr>";
+
+		while ($row = oci_fetch_array($result, OCI_BOTH)) {
+			echo "UserID: " . $row["USERID"] . " - Calories: " . $row["AGGREGATEDCALORIES"] . "<br>";
+			echo "<tr><td>" . $row["USERID"] . "</td><td>" . $row["AGGREGATEDCALORIES"] . "</td></tr>";
+		}
+
+		echo "</table>";
+	}
+
+	function handleMultiDeviceUsersRequest() {
+		global $db_conn;
+		
+		echo "handleMultiDeviceUsersRequest called<br>";
+	
+		$query = "SELECT UserID, COUNT(DISTINCT DeviceID) AS DeviceCount
+				  FROM NutritionInputs
+				  GROUP BY UserID
+				  HAVING COUNT(DISTINCT DeviceID) > 1";
+	
+		$result = executePlainSQL($query);
+	
+		echo "<br>Users with multiple devices:<br>";
+		echo "<table>";
+		echo "<tr><th>User ID</th><th>Device Count</th></tr>";
+	
+		while ($row = oci_fetch_array($result, OCI_BOTH)) {
+			echo "<tr><td>" . $row["USERID"] . "</td><td>" . $row["DEVICECOUNT"] . "</td></tr>";
+		}
+	
+		echo "</table>";
+	}
+
+	function doesForeignKeyExist($tableName, $columnName, $value) {
 		global $db_conn;
 
 		// Prepare the SQL query to check the existence of the key
@@ -337,51 +399,26 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	function handleDisplayRequest() 
+	function handleDisplayRequest()
+	{
+		global $db_conn;
+		$result = executePlainSQL("SELECT * FROM User_table");
+		printUsersTable($result);
+	}
+
+
+	// HANDLERS
+
+	function handleDisplayUsersRequest()
 	{
     global $db_conn;
-    
-    // Check if displayUserID is set in POST
-    if (isset($_POST['displayUserID'])) {
-        $userId = $_POST['displayUserID'];
-
-        // echo "Searching for UserID: " . $userId . "<br>"; // Debugging output
-
-        $tuple = array (
-            ":UserID" => $userId
-        );
-
-        $alltuples = array (
-            $tuple
-        );
-
-        // Formulate SQL query
-        $sql = "SELECT *
-                FROM User_table U, InsightMonitors I
-                WHERE U.UserID = $userId AND I.UserID = U.UserID";
-
-        // echo "SQL Query: " . $sql . "<br>"; // Debugging output
-
-        // Execute SQL query
-        $result = executePlainSQL($sql, $alltuples);
-
-        // Check if result is not null before printing
-        if ($result) {
-            // Call printUsersTable function
-            printUsersTable($result);
-        } else {
-            // Handle case when result is null
-            echo "No data found for UserID: " . $userId;
-        }
-    } else {
-        // Handle case when displayUserID is not set in POST
-        echo "UserID not provided.";
-    }
+    $result = executePlainSQL("SELECT * FROM User_table");
+    printUsersTable($result);
 	}
-	// HANDLERS
 
 	function handlePOSTRequest()
 	{
+		echo "handlePOSTRequest called<br>";
 		if (connectToDB()) {
 			if (array_key_exists('resetTablesRequest', $_POST)) {
 				handleResetRequest();
@@ -389,15 +426,17 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 				handleUpdateRequest();
 			} else if (array_key_exists('insertQueryRequest', $_POST)) {
 				handleInsertRequest();
-			} else if (array_key_exists('displayQueryRequest', $_POST)) {
-				handleDisplayRequest();
+			} else if (array_key_exists('aggregateCaloriesRequest', $_POST)){
+				handleAggregateCaloriesRequest();
+			} else if (array_key_exists('multiDeviceUsersRequest', $_POST)){
+				handleMultiDeviceUsersRequest();
 			}
 
 			disconnectFromDB();
 		}
 	}
 
-	
+
 	function handleGETRequest()
 	{
 		if (connectToDB()) {
@@ -413,27 +452,26 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	// PRINTERS
 
-	function printInsertRequestResult() 
-	{
+	function printInsertRequestResult() {
 		$result = executePlainSQL("SELECT * FROM NutritionInputs ORDER BY NutritionID");
 		echo "<br>Retrieved data from Nutrition table:<br>";
 		echo "<table>";
 		echo "
 			<tr>
-				<th>Nutrition ID</th>
-				<th>Device ID</th>
-				<th>User ID</th>
+				<th>NutritionID</th>
+				<th>DeviceID</th>
+				<th>UserID</th>
 				<th>Calories</th>
 				<th>Date</th>
 			</tr>";
 
 		while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
-			echo "<tr>" . 
-					"<td>" . $row[0] . "</td>" . 
-					"<td>" . $row[1] . "</td>" . 
-					"<td>" . $row[2] . "</td>" . 
-					"<td>" . $row[3] . "</td>" . 
-					"<td>" . $row[4] . "</td>" . 
+			echo "<tr>" .
+					"<td>" . $row[0] . "</td>" .
+					"<td>" . $row[1] . "</td>" .
+					"<td>" . $row[2] . "</td>" .
+					"<td>" . $row[3] . "</td>" .
+					"<td>" . $row[4] . "</td>" .
 				"<tr>";
 		}
 		echo "</table>";
@@ -443,36 +481,24 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	{
 		echo "<h2>Displaying Users</h2>";
 		echo "<table border='1'>";
-		echo "<tr><th>User ID</th>
-		<th>Age</th>
-		<th>Gender</th>
-		<th>Email</th>
-		<th>Weight</th>
-		<th>Insight</th>
-		<th>Date</th></tr>";
-	
+		echo "<tr><th>User ID</th><th>Age</th><th>Gender</th></tr>";
+
 		while ($row = OCI_Fetch_Array($result, OCI_ASSOC)) {
-			echo 
-				"<tr><td>" . $row["USERID"] . 
-				"</td><td>" . $row["AGE"] . 
-				"</td><td>" . $row["GENDER"] . 
-				"</td><td>" . $row["EMAIL"] . 
-				"</td><td>" . $row["USERWEIGHT"] . 
-				"</td><td>" . $row["RESULT"] . 
-				"</td><td>" . $row["INSIGHTMONITORSDATE"] . 
-				"</td></tr>"; 
+			echo "<tr><td>" . $row["USERID"] . "</td><td>" . $row["AGE"] . "</td><td>" . $row["GENDER"] . "</td></tr>"; 
 		}
-	
+
 		echo "</table>";
 	}
 
 
 	// Handler Fetcher
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['displaySubmit'])) {
+	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['submitAggregate']) || isset($_POST['submitMultiDeviceUsers'])) {
 		handlePOSTRequest();
 	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
 		handleGETRequest();
-	} 
+	} else if (isset($_GET['displayUsersRequest'])) {
+		handleDisplayUsersRequest();
+	}
 
 	?>
 </body>
