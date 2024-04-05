@@ -210,6 +210,8 @@ INTO GenerateData VALUES (2, 2, 2, 2, 1, 80, '02-MAR-2020')
 INTO GenerateData VALUES (3, 3, 3, 3, 3, 99, '03-MAR-2020')
 INTO GenerateData VALUES (4, 4, 4, 4, 1, 99, '04-MAR-2020')
 INTO GenerateData VALUES (5, 5, 5, 5, 1, 99, '05-MAR-2020')
+INTO GenerateData VALUES (6, 2, 1, 1, 1, 99, '01-MAR-2020')
+INTO GenerateData VALUES (7, 3, 1, 1, 1, 99, '01-MAR-2020')
 
 INTO InsightMonitors VALUES (1, 'You slept well last night', '01-FEB-2024', 1)
 INTO InsightMonitors VALUES (2, 'Your recovery score is improving!', '02-FEB-2024', 2)

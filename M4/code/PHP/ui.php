@@ -48,15 +48,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 </head>
 
 <body>
-	<!-- <h2>Reset</h2>
-	<p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
 
-	<form method="POST" action="ui.php">
-		<input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-		<p><input type="submit" value="Reset" name="reset"></p>
-	</form>
-
-	<hr /> -->
+	<h1>Health & Nutrition Tracker</h1>
 
 	<h2>Insert Nutrition Data</h2>
     <form method="POST" action="ui.php"> <!--refresh page when submitted-->
@@ -116,15 +109,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	<hr />
 
-	<h2>Count the Tuples in User table</h2>
-	<form method="GET" action="ui.php">
-		<input type="hidden" id="countTupleRequest" name="countTupleRequest">
-		<input type="submit" name="countTuples"></p>
-	</form>
-
-	<hr />
-
-
 	<h2>Display Tuples</h2>
 <form method="POST" action="ui.php">
     <input type="hidden" id="displayQueryRequest" name="displayQueryRequest">
@@ -159,9 +143,21 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 <hr />
 
+<h2>Division</h2>
+<form method="GET" action="ui.php">
+    <input type="hidden" id="divisionQueryRequest" name="divisionQueryRequest">
+    <!-- UserID: <input type="text" name="userDivision"> <br /><br /> -->
+    <input type="submit" value="Division" name="divisionSubmit"></p>
+</form>
+
+<hr />
+
+<h3>Created By: Omar Dawoud, Seif ElKemary, Zaid Al Attar</h3>
+<hr />
 
 	<?php
-	// The following code will be parsed as PHP
+
+	// SQL
 
 	function debugAlertMessage($message)
 	{
@@ -175,7 +171,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	function executePlainSQL($cmdstr)
 	{ //takes a plain (no bound variables) SQL command and executes it
 		// echo "<br>running ".$cmdstr."<br>";
-		echo "Running SQL: $cmdstr<br>";
+		// echo "Running SQL: $cmdstr<br>";
 		global $db_conn, $success;
 
 		$statement = oci_parse($db_conn, $cmdstr);
@@ -193,6 +189,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			echo "<br>Cannot execute the following command: " . $cmdstr . "<br>";
 			$e = oci_error($statement); // For oci_execute errors pass the statementhandle
 			echo htmlentities($e['message']);
+			echo "Error: Table does not exist";
 			$success = False;
 		}
 
@@ -210,7 +207,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		$statement = oci_parse($db_conn, $cmdstr);
 
 		if (!$statement) {
-			echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
+			// echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
 			$e = OCI_Error($db_conn);
 			echo htmlentities($e['message']);
 			$success = False;
@@ -266,45 +263,58 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	// HANDLERS
 
+	// ERROR HANDLED
 	function handleDeleteDeviceRequest() 
 	{
-		global $db_conn;
-	
-		// Retrieve DeviceID from the form submission
-		$deviceID = $_POST['deleteDeviceID'];
+    global $db_conn;
+    echo "<br>Processing Delete<br/>";
+    
+    // Retrieve DeviceID from the form submission
+    $deviceID = $_POST['deleteDeviceID'];
 
-		$tuple = array (
-			":DeviceID" => $deviceID
-		);
+    // Check if the Device ID exists
+    $checkQuery = "SELECT COUNT(*) AS deviceCount FROM Device WHERE DeviceID = $deviceID";
+    $checkTuple = array(":DeviceID" => $deviceID);
+    $checkResult = executePlainSQL($checkQuery, array($checkTuple));
 
-		$alltuples = array (
-			$tuple
-		);
-		
-		// Prepare the SQL statement for execution
-		// $statement = oci_parse($db_conn, $sql);
-		// oci_bind_by_name($statement, ":DeviceID", $deviceID); // Bind the DeviceID to ensure the correct device is targeted
-	
-		// Execute the deletion query
-		executePlainSQL("
-			DELETE FROM Device 
-			WHERE DeviceID = $deviceID", 
-			$alltuples);
-		// if ($r) {
-			// Notify the user of successful deletion
-			echo "<br> Device with ID " . $deviceID . " has been deleted successfully. <br>";
-		// } // else {
-			// Error handling: retrieve the error message from OCI and display it
-			// $e = oci_error($statement);
-			// echo "<script type='text/javascript'>alert('Error deleting device: " . htmlentities($e['message']) . "');</script>";
-		// }
+    // Check if the check query execution was successful
+    if (!$checkResult) {
+        echo "<br>Error: This Device Does not exist.<br/>";
+        return;
+    }
 
-		oci_commit($db_conn);
+    // Fetch the result row
+    $checkRow = oci_fetch_assoc($checkResult);
+    $deviceCount = $checkRow['DEVICECOUNT'];
+
+    if ($deviceCount == 0) {
+        echo "<br> Device with ID " . $deviceID . " does not exist. <br>";
+        return;
+    }
+
+    // Prepare the SQL statement for deletion
+    $deleteQuery = "DELETE FROM Device WHERE DeviceID = :DeviceID";
+    $deleteTuple = array(":DeviceID" => $deviceID);
+
+    // Execute the deletion query
+    $deleteResult = executeBoundSQL($deleteQuery, array($deleteTuple));
+
+    if ($deleteResult) {
+        // Notify the user of successful deletion
+        echo "<br> Device with ID " . $deviceID . " has been deleted successfully. <br>";
+    }
+
+	echo "Device Deleted Successfully";
+
+    oci_commit($db_conn);
 	}
 
+	// NO ERROR HANDLING
 	function handleUpdateRequest()
 	{
 		global $db_conn;
+
+		echo "Processing Update";
 
             $tuple = array (
                 ":UserID" => $_POST['updateUserID'],
@@ -315,6 +325,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
             $alltuples = array (
                 $tuple
             );
+
+			
 
 			// echo "<br>RESULT BEFORE UPDATE:</br>";
 			// printUpdateRequestResult();
@@ -332,18 +344,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
             oci_commit($db_conn);
 	}
 
-	// function handleResetRequest()
-	// {
-	// 	global $db_conn;
-	// 	// Drop old table
-	// 	executePlainSQL("DROP TABLE demoTable");
-
-	// 	// Create new table
-	// 	echo "<br> creating new table <br>";
-	// 	executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
-	// 	oci_commit($db_conn);
-	// }
-
+	// NO ERROR HANDLING
 	function handleInsertRequest()
 	{
 		global $db_conn;
@@ -370,8 +371,11 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			return;
 		}
 
+		$nutritionTable = executePlainSQL("SELECT * FROM NUTRITIONINPUTS ORDER BY NutritionID");
+		
+
 		echo "<br>User_table BEFORE INSERT:</br>";
-        printInsertRequestResult();
+        printResult($nutritionTable);
 
 		executeBoundSQL("
             INSERT INTO NutritionInputs (
@@ -391,15 +395,17 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
         $alltuples);
 
 		echo "<br>User_table AFTER INSERT:</br>";
-        printInsertRequestResult();
+		$nutritionTable1 = executePlainSQL("SELECT * FROM NUTRITIONINPUTS ORDER BY NutritionID");
+		printResult($nutritionTable1);
 
 
 		oci_commit($db_conn);
 	}
 
+	// ERROR HANDLED
 	function handleAggregateCaloriesRequest() 
 	{
-		echo "handleAggregateCaloriesRequest called<br>";
+		echo "Aggregate Processing<br>";
 		global $db_conn;
 
 		$aggregationType = $_POST['aggregationType'];
@@ -416,14 +422,16 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			echo "<tr><td>" . $row["USERID"] . "</td><td>" . $row["AGGREGATEDCALORIES"] . "</td></tr>";
 		}
 
-		echo "</table>";
+		echo "</table><br>";
+		echo "Aggregate completed Successfully<br>";
 	}
 
+	// ERROR HANDLED
 	function handleMultiDeviceUsersRequest() 
 	{
 		global $db_conn;
 		
-		echo "handleMultiDeviceUsersRequest called<br>";
+		echo "User with multiple devices Processing<br>";
 	
 		$query = "SELECT UserID, COUNT(DISTINCT DeviceID) AS DeviceCount
 				  FROM NutritionInputs
@@ -441,78 +449,76 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	
 		echo "</table>";
+		echo "User with multiple devices completed successfully<br>";
 	}
-
-	function doesForeignKeyExist($tableName, $columnName, $value) 
-	{
-		global $db_conn;
-
-		// Prepare the SQL query to check the existence of the key
-		$sql = "SELECT COUNT(*) FROM " . $tableName . " WHERE " . $columnName . " = :value";
-
-		$statement = oci_parse($db_conn, $sql);
-		oci_bind_by_name($statement, ":value", $value);
-
-		// Execute the query
-		oci_execute($statement, OCI_DEFAULT);
-
-		// Fetch the result
-		if ($row = oci_fetch_array($statement)) {
-			// If count is more than 0, the foreign key exists
-			return $row[0] > 0;
-		}
-		return false; // In case the query fails or count is 0
-	}
-
-	function handleCountRequest()
-	{
-		global $db_conn;
-
-		$result = executePlainSQL("SELECT Count(*) FROM User_table");
-
-		if (($row = oci_fetch_row($result)) != false) {
-			echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
-		}
-	}
-
+	
+	// ERROR HANDLED EXCEPT ATTRIBUTES
 	function handleDisplayRequest()
 	{
-		global $db_conn;
-	
-		// Check if tableName is set in POST
-		if (isset($_POST['tableName'])) {
-			$tableName = $_POST['tableName'];
-			$attributes = $_POST['attributes'];
-	
-			// Formulate SQL query
-			$sql = "";
-	
-			if (!empty($attributes)) {
-				// If attributes are provided, include them in the query
-				$sql = "SELECT {$attributes} FROM {$tableName}";
-			} else {
-				// If attributes are not provided, select all attributes
-				$sql = "SELECT * FROM {$tableName}";
-			}
-	
-			// Execute SQL query
-			$result = executePlainSQL($sql);
-	
-			// Check if result is not null before printing
-			if ($result) {
-				// Call printResult function
-				printResult($result);
-			} else {
-				// Handle case when result is null
-				echo "No data found for table: " . $tableName;
-			}
-		} else {
-			// Handle case when tableName is not set in POST
-			echo "Table Name not provided.";
-		}
+    	global $db_conn;
+    	echo "Projection Processing<br>";
+
+   		if (isset($_POST['tableName'])) {
+        $tableName = $_POST['tableName'];
+        $attributes = $_POST['attributes'];
+
+        
+        if (!doesTableExist($tableName)) {
+            echo "Error: Table '{$tableName}' does not exist in the database. <br>";
+            return;
+        }
+
+        $sql = "";
+
+        if (!empty($attributes)) {
+            $sql = "SELECT {$attributes} FROM {$tableName}";
+        } else {
+            $sql = "SELECT * FROM {$tableName}";
+        }
+
+        $result = executePlainSQL($sql);
+
+        // Check if result is not null before printing
+        if ($result) {
+            
+            printResult($result);
+        } else {
+            // Handle case when result is null
+            echo "No data found for table: " . $tableName;
+        }
+    	} else {
+        // Handle case when tableName is not set in POST
+        echo "Table Name not provided. <br>";
+    	}
+
+		echo "Projection Completed Successfully <br>";
 	}
 
-	function handleSelectRequest() {
+	// ERROR HANDLED
+	// function getTableColumns($tableName)
+	// {
+   	// 	global $db_conn;
+    // 	$columns = array();
+
+	// 	$upperName = strtoupper($tableName);
+
+    // 	// Query to get column names for the given table
+    // 	$sql = "SELECT column_name FROM all_tab_columns WHERE table_name = :tableName";
+    // 	$statement = oci_parse($db_conn, $sql);
+    // 	oci_bind_by_name($statement, ":tableName", $upperName);
+    // 	oci_execute($statement);
+
+    // 	// Fetch column names and store them in an array
+    // 	while ($row = oci_fetch_assoc($statement)) {
+    //    		$columns[] = $row['COLUMN_NAME'];
+    // 	}
+
+    // 	return $columns;
+	// }
+	
+	// ERROR HANDLED
+	function handleSelectRequest() 
+	{
 		global $db_conn;
 	
 		// Check if form is submitted
@@ -569,42 +575,72 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		}
 	}
 
-	function handleJoinRequest()
-{
-    global $db_conn;
+	// ERROR HANDLED
+	function handleJoinRequest() 
+	{
+    	global $db_conn;
 
-    $tuple = array(
-        ":Bedtime" => $_POST['bedtimeJoin']
-    );
+		echo "Join Processing";
 
-	$bedtime = $_POST['bedtimeJoin'];
+    	$tuple = array(
+    	    ":Bedtime" => $_POST['bedtimeJoin']
+    	);
 
-    $alltuples = array(
-        $tuple
-    );
+		$bedtime = $_POST['bedtimeJoin'];
 
-    $result = "
-	SELECT U.Email, U.Age, S.Bedtime
-	FROM Sleep S, GenerateData GD, User_table U, NutritionInputs NI
-	WHERE U.UserID = NI.UserID AND  NI.DeviceID = GD.DeviceID 
-	AND GD.SleepID = S.SleepID AND S.Bedtime = $bedtime";
+   		$alltuples = array(
+    	$tuple
+    	);
 
-    $resultResource = executePlainSQL($result);
+    	$result = "
+		SELECT U.Email, U.Age, S.Bedtime
+		FROM Sleep S, GenerateData GD, User_table U, NutritionInputs NI
+		WHERE U.UserID = NI.UserID AND  NI.DeviceID = GD.DeviceID 
+		AND GD.SleepID = S.SleepID AND S.Bedtime = $bedtime";
 
-    if ($resultResource) {
-        printResult($resultResource);
-    } else {
-        echo "No results found.";
-    }
+    	$resultResource = executePlainSQL($result);
 
-    oci_commit($db_conn);
-}
+		if ($resultResource) {
+        	printResult($resultResource);
+			
+    	} else {
+        	echo "Error: No results found.";
+    	}
 
+    	oci_commit($db_conn);
+
+		echo "Completed Join Successfully<br>";
+		}
 	
-	
+	// ERROR HANDLED
+	function handleDivisionRequest()
+	{
+		global $db_conn; // Assume this is your database connection variable
+
+    	echo "Division Processing<br>";
+
+    	// The SQL query
+    	$sql = "
+        SELECT U.UserID
+        FROM User_table U
+        WHERE NOT EXISTS (
+            (SELECT G.goalDescription FROM Goals G)
+            MINUS
+            (SELECT G.goalDescription 
+             FROM NutritionInputs NI
+             JOIN GenerateData GD ON NI.DeviceID = GD.DeviceID
+             JOIN Goals G ON GD.GoalsID = G.GoalsID
+             WHERE NI.UserID = U.UserID))
+    	";
+
+    	$result = executePlainSQL($sql);
+		printResult($result);
+		echo "Division Completed Successfully";
+	} 
+
 	function handlePOSTRequest()
 	{
-		echo "handlePOSTRequest called<br>";
+		// echo "handlePOSTRequest called<br>";
 		if (connectToDB()) {
 			if (array_key_exists('resetTablesRequest', $_POST)) {
 				handleResetRequest();
@@ -635,17 +671,59 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		if (connectToDB()) {
 			if (array_key_exists('countTuples', $_GET)) {
 				handleCountRequest();
-			 } // elseif (array_key_exists('displayTuples', $_GET)) {
-			// 	handleDisplayRequest();
-			// }
+			 } elseif (array_key_exists('divisionQueryRequest', $_GET)) {
+				handleDivisionRequest();
+		}
 
 			disconnectFromDB();
 		}
 	}
-	
-	// PRINTERS
 
-	function printResult($result) {
+	// HELPERS
+
+	// FOR PROJECTION HANDLER
+	function doesTableExist($tableName) {
+		global $db_conn;
+		
+		$upperTableName = strtoupper($tableName);
+		$sql = "SELECT COUNT(*) FROM user_tables WHERE table_name = :tableName";
+		$statement = oci_parse($db_conn, $sql);
+		oci_bind_by_name($statement, ":tableName", $upperTableName);
+	
+		oci_execute($statement);
+	
+		
+		$row = oci_fetch_array($statement);
+		if ($row) {
+			return $row[0] > 0;
+		}
+		return false; 
+	}
+
+	// FOR INSERT HANDLER
+	function doesForeignKeyExist($tableName, $columnName, $value) 
+	{
+			global $db_conn;
+	
+			// Prepare the SQL query to check the existence of the key
+			$sql = "SELECT COUNT(*) FROM " . $tableName . " WHERE " . $columnName . " = :value";
+	
+			$statement = oci_parse($db_conn, $sql);
+			oci_bind_by_name($statement, ":value", $value);
+	
+			// Execute the query
+			oci_execute($statement, OCI_DEFAULT);
+	
+			// Fetch the result
+			if ($row = oci_fetch_array($statement)) {
+				// If count is more than 0, the foreign key exists
+				return $row[0] > 0;
+			}
+			return false; // In case the query fails or count is 0
+	}
+
+	function printResult($result) 
+	{
 		echo "<h2>Displaying Results</h2>";
 		echo "<table border='1'>";
 	
@@ -667,41 +745,17 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			echo "</tr>";
 		}
 	
-		echo "</table>";
+		echo "</table> <br>";
 	}
 
-	function printInsertRequestResult() 
-	{
-		$result = executePlainSQL("SELECT * FROM NutritionInputs ORDER BY NutritionID");
-		echo "<br>Retrieved data from Nutrition table:<br>";
-		echo "<table>";
-		echo "
-			<tr>
-				<th>NutritionID</th>
-				<th>DeviceID</th>
-				<th>UserID</th>
-				<th>Calories</th>
-				<th>Date</th>
-			</tr>";
 
-		while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
-			echo "<tr>" .
-					"<td>" . $row[0] . "</td>" .
-					"<td>" . $row[1] . "</td>" .
-					"<td>" . $row[2] . "</td>" .
-					"<td>" . $row[3] . "</td>" .
-					"<td>" . $row[4] . "</td>" .
-				"<tr>";
-		}
-		echo "</table>";
-	}
 
 	// Handler Fetcher
 	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['submitAggregate']) 
 	|| isset($_POST['submitMultiDeviceUsers']) || isset($_POST['displaySubmit']) || isset($_POST['selectSubmit']) || isset($_POST['deleteSubmit']) 
 	|| isset($_POST['joinSubmit'])) {
 		handlePOSTRequest();
-	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
+	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest']) || isset($_GET['divisionSubmit'])) {
 		handleGETRequest();
 	} else if (isset($_GET['displayUsersRequest'])) {
 		handleDisplayUsersRequest();
