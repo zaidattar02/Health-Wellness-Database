@@ -114,7 +114,7 @@ CREATE TABLE NutritionInputs (
     FOREIGN KEY (UserID) REFERENCES User_table(UserID)
 );
 
-CREATE SEQUENCE NutritionID_seq START WITH 6 INCREMENT BY 1;
+CREATE SEQUENCE NutritionID_seq START WITH 7 INCREMENT BY 1;
 
 CREATE TABLE GenerateData (
     DataID INTEGER PRIMARY KEY,
@@ -204,6 +204,8 @@ INTO NutritionInputs VALUES (2, 2, 2, 1800, '02-FEB-2024')
 INTO NutritionInputs VALUES (3, 3, 3, 2200, '03-FEB-2024')
 INTO NutritionInputs VALUES (4, 4, 4, 1900, '04-FEB-2024')
 INTO NutritionInputs VALUES (5, 5, 5, 2100, '05-FEB-2024')
+INTO NutritionInputs VALUES (6, 2, 1, 2000, '01-FEB-2024')
+INTO NutritionInputs VALUES (7, 3, 1, 2000, '01-FEB-2024')
 
 INTO GenerateData VALUES (1, 1, 1, 1, 1, 99, '01-MAR-2020')
 INTO GenerateData VALUES (2, 2, 2, 2, 1, 80, '02-MAR-2020')
