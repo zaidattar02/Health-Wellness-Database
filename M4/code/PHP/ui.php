@@ -15,8 +15,8 @@ error_reporting(E_ALL);
 // Set some parameters
 
 // Database access configuration
-$config["dbuser"] = "ora_omardawd";			// change "cwl" to your own CWL
-$config["dbpassword"] = "a81766800";	// change to 'a' + your student number
+$config["dbuser"] = "ora_zalattar";			// change "cwl" to your own CWL
+$config["dbpassword"] = "a18135475";	// change to 'a' + your student number
 $config["dbserver"] = "dbhost.students.cs.ubc.ca:1522/stu";
 $db_conn = NULL;	// login credentials are used in connectToDB()
 
@@ -32,6 +32,70 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 <head>
 	<title>Health & Nutrition Tracker</title>
+	<style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #333;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    input[type="submit"] {
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      padding: 14px 20px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+
+    tr:nth-child(even) {background-color: #f2f2f2;}
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+  </style>
 </head>
 
 <body>
@@ -44,7 +108,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
             DeviceID: <input type="text" name="insertDeviceID"> <br /><br />
 			User ID: <input type="text" name="insertUserID"> <br /><br />
             Calories: <input type="text" name="insertCalories"> <br /><br />
-			Date: <input type = "text" name="insertDate"> <br /><br />
+			Date (DD-MMM-YYYY): <input type = "text" name="insertDate"> <br /><br />
             <input type="submit" value="Insert" name="insertSubmit"></p>
         </form>
 	<hr />
@@ -64,20 +128,28 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 <hr />
 
 <h2>Delete Device</h2>
-	
+
 	<form method="POST" action="ui.php">
     	<input type="hidden" id="deleteDeviceRequest" name="deleteDeviceRequest">
     	Device ID: <input type="text" name="deleteDeviceID"> <br /><br />
-    
+
 		<input type="submit" value="Delete" name="deleteSubmit">
 	</form>
-	
+
 	<hr />
 
 <h2>Users with Multiple Devices</h2>
 <form method="POST" action="ui.php">
     <input type="hidden" name="multiDeviceUsersRequest">
     <input type="submit" value="Find Users" name="submitMultiDeviceUsers">
+</form>
+
+<hr />
+
+<h2>Users with average sleep duration greater than average of all users</h2>
+<form method="POST" action="ui.php">
+    <input type="hidden" name="nestedAggRequest">
+    <input type="submit" value="Execute Nested Aggregation" name="submitNestedAgg">
 </form>
 
 <hr />
@@ -121,7 +193,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 <hr />
 
-<h2>Join: Find the emails and ages of users who sleep at</h2>
+<h2>Join: Find the emails and ages of users who sleep at a specific time</h2>
 <form method="POST" action="ui.php">
     <input type="hidden" id="joinQueryRequest" name="joinQueryRequest">
 	Bedtime: <input type="text" name="bedtimeJoin"> <br /><br />
@@ -130,7 +202,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 <hr />
 
-<h2>Division</h2>
+<h2>Division: Find all Users who accomplished all their goals</h2>
 <form method="GET" action="ui.php">
     <input type="hidden" id="divisionQueryRequest" name="divisionQueryRequest">
     <!-- UserID: <input type="text" name="userDivision"> <br /><br /> -->
@@ -251,7 +323,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	// HANDLERS
 
 	// ERROR HANDLED
-	function handleDeleteDeviceRequest() 
+	function handleDeleteDeviceRequest()
 	{
     global $db_conn;
     echo "<br>Processing Delete<br/>";
@@ -348,6 +420,16 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			$tuple
 		);
 
+		if(!$tuple[":DeviceID"] || !$tuple[":UserID"] || !$tuple[":Calories"] || !$tuple[":inputDate"]){
+			echo "Error: Enter all required fields";
+			return;
+		}
+
+		if(!is_numeric($tuple[":Calories"])){
+			echo "Error: Calories must be a number.";
+			return;
+		}
+
 		if (!doesForeignKeyExist('User_table', 'UserID', $tuple[":UserID"])) {
 			echo "Error: No such User ID found.";
 			return;
@@ -389,10 +471,25 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		oci_commit($db_conn);
 	}
 
+	function handleNested() {
+		global $db_conn;
+	
+	
+		// The SQL query
+		$sql = "SELECT SleepID, AVG(Duration) AS AvgDuration
+				FROM Sleep
+				GROUP BY SleepID
+				HAVING AVG(Duration) > (SELECT AVG(Duration) FROM Sleep)";
+	
+		$result = executePlainSQL($sql);
+	
+		// Call a function to print results
+		printResult($result);
+	}
+
 	// ERROR HANDLED
-	function handleAggregateCaloriesRequest() 
+	function handleAggregateCaloriesRequest()
 	{
-		echo "Aggregate Processing<br>";
 		global $db_conn;
 
 		$aggregationType = $_POST['aggregationType'];
@@ -550,7 +647,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	{
     	global $db_conn;
 
-		echo "Join Processing";
 
     	$tuple = array(
     	    ":Bedtime" => $_POST['bedtimeJoin']
@@ -587,7 +683,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	{
 		global $db_conn; // Assume this is your database connection variable
 
-    	echo "Division Processing<br>";
 
     	// The SQL query
     	$sql = "
@@ -630,8 +725,9 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 				handleDeleteDeviceRequest();
 			} elseif (array_key_exists('joinQueryRequest', $_POST)) {
 				handleJoinRequest();
+			} elseif (array_key_exists('nestedAggRequest', $_POST)){
+				handleNested();
 			}
-
 			disconnectFromDB();
 		}
 	}
@@ -670,26 +766,18 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		return false; 
 	}
 
-	// FOR INSERT HANDLER
-	function doesForeignKeyExist($tableName, $columnName, $value) 
-	{
-			global $db_conn;
+	function doesForeignKeyExist($tableName, $columnName, $value) {
+		global $db_conn;
+
+		$sql = "SELECT COUNT(*) AS COUNT_RESULT FROM {$tableName} WHERE {$columnName} = {$value}";
+
+		$statement = executePlainSQL($sql);
 	
-			// Prepare the SQL query to check the existence of the key
-			$sql = "SELECT COUNT(*) FROM " . $tableName . " WHERE " . $columnName . " = :value";
-	
-			$statement = oci_parse($db_conn, $sql);
-			oci_bind_by_name($statement, ":value", $value);
-	
-			// Execute the query
-			oci_execute($statement, OCI_DEFAULT);
-	
-			// Fetch the result
-			if ($row = oci_fetch_array($statement)) {
-				// If count is more than 0, the foreign key exists
-				return $row[0] > 0;
-			}
-			return false; // In case the query fails or count is 0
+		$row = oci_fetch_array($statement);
+		if ($row) {
+			return $row[0] > 0;
+		}
+		return false;
 	}
 
 	function printResult($result) 
@@ -719,9 +807,9 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 	}
 
 	// Handler Fetcher
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['submitAggregate']) 
-	|| isset($_POST['submitMultiDeviceUsers']) || isset($_POST['displaySubmit']) || isset($_POST['selectSubmit']) || isset($_POST['deleteSubmit']) 
-	|| isset($_POST['joinSubmit'])) {
+	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['submitAggregate'])
+	|| isset($_POST['submitMultiDeviceUsers']) || isset($_POST['displaySubmit']) || isset($_POST['selectSubmit']) || isset($_POST['deleteSubmit'])
+	|| isset($_POST['joinSubmit']) || isset($_POST['submitNestedAgg'])) {
 		handlePOSTRequest();
 	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest']) || isset($_GET['divisionSubmit'])) {
 		handleGETRequest();

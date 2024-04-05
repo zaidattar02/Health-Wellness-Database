@@ -123,7 +123,7 @@ CREATE TABLE GenerateData (
     SleepID INTEGER,
     DeviceID INTEGER,
     Score INTEGER,
-    GenerateDataDate DATE, 
+    GenerateDataDate DATE,
     FOREIGN KEY (SleepID) REFERENCES Sleep(SleepID) ON DELETE SET NULL,
     FOREIGN KEY (RecoveryID) REFERENCES Recovery(RecoveryID) ON DELETE SET NULL,
     FOREIGN KEY (GoalsID) REFERENCES Goals(GoalsID) ON DELETE SET NULL,
@@ -144,7 +144,9 @@ CREATE TABLE InsightProvides (
     Result VARCHAR(255),
     InsightProvidesDate DATE,
     DeviceID INTEGER,
-    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) ON DELETE CASCADE --ON DELETE SET NULL ON UPDATE CASCADE
+    UserID INTEGER,
+    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) ON DELETE CASCADE, --ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (UserID) REFERENCES User_table(UserID) ON DELETE CASCADE --ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 
@@ -221,11 +223,12 @@ INTO InsightMonitors VALUES (3, 'Keep up the good work on your goals!', '03-FEB-
 INTO InsightMonitors VALUES (4, 'Consider adjusting your nutrition for better results', '04-FEB-2024', 4)
 INTO InsightMonitors VALUES (5, 'Remember to stretch before exercising', '05-FEB-2024', 5)
 
-INTO InsightProvides VALUES (1, 'Recovery decreased', '01-FEB-2024', 1)
-INTO InsightProvides VALUES (2, 'Sleep duration got better', '02-FEB-2024', 2)
-INTO InsightProvides VALUES (3, 'Bedtime becomes earlier', '03-FEB-2024', 3)
-INTO InsightProvides VALUES (4, 'Nutrition needs more calories', '04-FEB-2024', 4)
-INTO InsightProvides VALUES (5, 'Activity updated', '05-FEB-2024', 5)
+INTO InsightProvides VALUES (1, 'Recovery decreased', '01-FEB-2024', 1, 1)
+INTO InsightProvides VALUES (2, 'Sleep duration got better', '02-FEB-2024', 2, 2)
+INTO InsightProvides VALUES (3, 'Bedtime becomes earlier', '03-FEB-2024', 3, 3)
+INTO InsightProvides VALUES (4, 'Nutrition needs more calories', '04-FEB-2024', 4, 4)
+INTO InsightProvides VALUES (5, 'Activity updated', '05-FEB-2024', 5, 5)
 
 SELECT 1 FROM DUAL;
+
 
