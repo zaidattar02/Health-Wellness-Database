@@ -110,11 +110,11 @@ CREATE TABLE NutritionInputs (
     UserID INTEGER,
     Calories INTEGER,
     NutritionInputsDate DATE,
-    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID),
+    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) ON DELETE CASCADE,
     FOREIGN KEY (UserID) REFERENCES User_table(UserID)
 );
 
-CREATE SEQUENCE NutritionID_seq START WITH 6 INCREMENT BY 1;
+CREATE SEQUENCE NutritionID_seq START WITH 7 INCREMENT BY 1;
 
 CREATE TABLE GenerateData (
     DataID INTEGER PRIMARY KEY,
@@ -124,10 +124,10 @@ CREATE TABLE GenerateData (
     DeviceID INTEGER,
     Score INTEGER,
     GenerateDataDate DATE, 
-    FOREIGN KEY (SleepID) REFERENCES Sleep(SleepID), --ON DELETE SET NULL ON UPDATE CASCADE
-    FOREIGN KEY (RecoveryID) REFERENCES Recovery(RecoveryID),
-    FOREIGN KEY (GoalsID) REFERENCES Goals(GoalsID),
-    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID)
+    FOREIGN KEY (SleepID) REFERENCES Sleep(SleepID) ON DELETE SET NULL,
+    FOREIGN KEY (RecoveryID) REFERENCES Recovery(RecoveryID) ON DELETE SET NULL,
+    FOREIGN KEY (GoalsID) REFERENCES Goals(GoalsID) ON DELETE SET NULL,
+    FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID) ON DELETE SET NULL
 );
 
 CREATE TABLE InsightMonitors (
@@ -204,12 +204,16 @@ INTO NutritionInputs VALUES (2, 2, 2, 1800, '02-FEB-2024')
 INTO NutritionInputs VALUES (3, 3, 3, 2200, '03-FEB-2024')
 INTO NutritionInputs VALUES (4, 4, 4, 1900, '04-FEB-2024')
 INTO NutritionInputs VALUES (5, 5, 5, 2100, '05-FEB-2024')
+INTO NutritionInputs VALUES (6, 2, 1, 2000, '01-FEB-2024')
+INTO NutritionInputs VALUES (7, 3, 1, 2000, '01-FEB-2024')
 
 INTO GenerateData VALUES (1, 1, 1, 1, 1, 99, '01-MAR-2020')
 INTO GenerateData VALUES (2, 2, 2, 2, 1, 80, '02-MAR-2020')
 INTO GenerateData VALUES (3, 3, 3, 3, 3, 99, '03-MAR-2020')
 INTO GenerateData VALUES (4, 4, 4, 4, 1, 99, '04-MAR-2020')
 INTO GenerateData VALUES (5, 5, 5, 5, 1, 99, '05-MAR-2020')
+INTO GenerateData VALUES (6, 2, 1, 1, 1, 99, '01-MAR-2020')
+INTO GenerateData VALUES (7, 3, 1, 1, 1, 99, '01-MAR-2020')
 
 INTO InsightMonitors VALUES (1, 'You slept well last night', '01-FEB-2024', 1)
 INTO InsightMonitors VALUES (2, 'Your recovery score is improving!', '02-FEB-2024', 2)
