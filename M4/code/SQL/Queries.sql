@@ -112,3 +112,23 @@ VALUES (
     :InsightProvidesDate,
     :DeviceID
 );
+
+
+-- INSERT calories and date for an inputted userID that fetches
+INSERT INTO NutritionInputs (NutritionID, DeviceID, UserID, Calories, NutritionInputsDate)
+SELECT N.NutritionID, D.DeviceID, U.UserID, :Calories AS Calories, :Date AS NutritionInputsDate
+FROM User_table U, NutritionInputs N, Device D
+WHERE U.UserID = :UserID AND U.UserID = N.UserID AND N.DeviceID = D.DeviceID;
+
+-- DELETE a USER with all associated data
+
+UPDATE User_table
+SET Email = :Email, UserWeight = :UserWeight
+WHERE UserID = :UserID;
+
+
+
+-- Questions to ask TA
+-- 1. Why does the on delete cascades dont work
+-- 2. Why does our insert not work?
+-- 3. 

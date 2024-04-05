@@ -1,18 +1,5 @@
-<!-- Test Oracle file for UBC CPSC304
-  Created by Jiemin Zhang
-  Modified by Simona Radu
-  Modified by Jessica Wong (2018-06-22)
-  Modified by Jason Hall (23-09-20)
-  This file shows the very basics of how to execute PHP commands on Oracle.
-  Specifically, it will drop a table, create a table, insert values update
-  values, and then query for values
-  IF YOU HAVE A TABLE CALLED "demoTable" IT WILL BE DESTROYED
-
-  The script assumes you already have a server set up All OCI commands are
-  commands to the Oracle libraries. To get the file to work, you must place it
-  somewhere where your Apache server can run it, and you must rename it to have
-  a ".php" extension. You must also change the username and password on the
-  oci_connect below to be your ORACLE username and password
+<!-- Project file for UBC CPSC304
+  Created by Omar Dawoud, Seif ElKemary, Zaid AlAttar
 -->
 
 <?php
@@ -44,67 +31,120 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 <html>
 
 <head>
-	<title>CPSC 304 PHP/Oracle Demonstration</title>
+	<title>Health & Nutrition Tracker</title>
 </head>
 
 <body>
-	<h2>Reset</h2>
-	<p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
 
+	<h1>Health & Nutrition Tracker</h1>
+
+	<h2>Insert Nutrition Data</h2>
+    <form method="POST" action="ui.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            DeviceID: <input type="text" name="insertDeviceID"> <br /><br />
+			User ID: <input type="text" name="insertUserID"> <br /><br />
+            Calories: <input type="text" name="insertCalories"> <br /><br />
+			Date: <input type = "text" name="insertDate"> <br /><br />
+            <input type="submit" value="Insert" name="insertSubmit"></p>
+        </form>
+	<hr />
+
+	<h2> Aggregate Calories Data</h2>
+<form method="POST" action="ui.php">
+    <select name="aggregationType">
+        <option value="MAX">Max</option>
+        <option value="MIN">Min</option>
+        <option value="AVG">Average</option>
+        <option value="COUNT">Count</option>
+    </select>
+    <input type="hidden" name="aggregateCaloriesRequest">
+    <input type="submit" value="Aggregate" name="submitAggregate">
+</form>
+
+<hr />
+
+<h2>Delete Device</h2>
+	
 	<form method="POST" action="ui.php">
-		<!-- "action" specifies the file or page that will receive the form data for processing. As with this example, it can be this same file. -->
-		<input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-		<p><input type="submit" value="Reset" name="reset"></p>
+    	<input type="hidden" id="deleteDeviceRequest" name="deleteDeviceRequest">
+    	Device ID: <input type="text" name="deleteDeviceID"> <br /><br />
+    
+		<input type="submit" value="Delete" name="deleteSubmit">
 	</form>
-
+	
 	<hr />
 
-	<h2>Insert New User</h2>
-    <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-        <label for="UserID">UserID:</label>
-        <input type="text" id="UserID" name="UserID"><br><br>
+<h2>Users with Multiple Devices</h2>
+<form method="POST" action="ui.php">
+    <input type="hidden" name="multiDeviceUsersRequest">
+    <input type="submit" value="Find Users" name="submitMultiDeviceUsers">
+</form>
 
-        <label for="Age">Age:</label>
-        <input type="text" id="Age" name="Age"><br><br>
+<hr />
 
-        <label for="Gender">Gender:</label>
-        <input type="text" id="Gender" name="Gender"><br><br>
 
-        <input type="submit" name="submit" value="Submit">
-    </form>
-
-	<hr />
-
-	<h2>Update Name in DemoTable</h2>
+<h2>Update User info</h2>
 	<p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
-
 	<form method="POST" action="ui.php">
 		<input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-		Old Name: <input type="text" name="oldName"> <br /><br />
-		New Name: <input type="text" name="newName"> <br /><br />
+		UserID: <input type="text" name="updateUserID"> <br /><br />
+		New Email: <input type="text" name="updateEmail"> <br /><br />
+		New Weight: <input type="text" name="updateWeight"> <br /><br />
 
 		<input type="submit" value="Update" name="updateSubmit"></p>
 	</form>
 
 	<hr />
 
-	<h2>Count the Tuples in DemoTable</h2>
-	<form method="GET" action="ui.php">
-		<input type="hidden" id="countTupleRequest" name="countTupleRequest">
-		<input type="submit" name="countTuples"></p>
-	</form>
+	<h2>Display Tuples</h2>
+<form method="POST" action="ui.php">
+    <input type="hidden" id="displayQueryRequest" name="displayQueryRequest">
+    Table Name: <input type="text" name="tableName"> <br /><br />
+    Attributes(Leave blank to display full table | Seperate By Commas): <input type="text" name="attributes"> <br /><br />
+    <input type="submit" value="Display" name="displaySubmit"></p>
+</form>
 
-	<hr />
+<hr />
 
-	<h2>Display Tuples in DemoTable</h2>
-	<form method="GET" action="ui.php">
-		<input type="hidden" id="displayTuplesRequest" name="displayTuplesRequest">
-		<input type="submit" name="displayTuples"></p>
-	</form>
+<h2>Select Insights With the following conditions</h2>
+<form method="POST" action="ui.php">
+    <input type="hidden" id="selectQueryRequest" name="selectQueryRequest">
+	UserID: <input type="text" name="userSelect"> <br /><br />
+	Calories: <input type="text" name="caloriesSelect"> <br /><br />
+	<select name="caloriesOperator">
+            <option value="AND">AND</option>
+            <option value="OR">OR</option>
+        </select>
+	Date: <input type="text" name="dateSelect"> <br /><br />
+	<input type="submit" value="Select" name="selectSubmit"></p>
+</form>
 
+<hr />
+
+<h2>Join: Find the emails and ages of users who sleep at</h2>
+<form method="POST" action="ui.php">
+    <input type="hidden" id="joinQueryRequest" name="joinQueryRequest">
+	Bedtime: <input type="text" name="bedtimeJoin"> <br /><br />
+	<input type="submit" value="Join" name="joinSubmit"></p>
+</form>
+
+<hr />
+
+<h2>Division</h2>
+<form method="GET" action="ui.php">
+    <input type="hidden" id="divisionQueryRequest" name="divisionQueryRequest">
+    <!-- UserID: <input type="text" name="userDivision"> <br /><br /> -->
+    <input type="submit" value="Division" name="divisionSubmit"></p>
+</form>
+
+<hr />
+
+<h3>Created By: Omar Dawoud, Seif ElKemary, Zaid Al Attar</h3>
+<hr />
 
 	<?php
-	// The following code will be parsed as PHP
+
+	// SQL
 
 	function debugAlertMessage($message)
 	{
@@ -117,7 +157,8 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 
 	function executePlainSQL($cmdstr)
 	{ //takes a plain (no bound variables) SQL command and executes it
-		//echo "<br>running ".$cmdstr."<br>";
+		// echo "<br>running ".$cmdstr."<br>";
+		// echo "Running SQL: $cmdstr<br>";
 		global $db_conn, $success;
 
 		$statement = oci_parse($db_conn, $cmdstr);
@@ -135,6 +176,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 			echo "<br>Cannot execute the following command: " . $cmdstr . "<br>";
 			$e = oci_error($statement); // For oci_execute errors pass the statementhandle
 			echo htmlentities($e['message']);
+			echo "Error: Table does not exist";
 			$success = False;
 		}
 
@@ -152,7 +194,7 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		$statement = oci_parse($db_conn, $cmdstr);
 
 		if (!$statement) {
-			echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
+			// echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
 			$e = OCI_Error($db_conn);
 			echo htmlentities($e['message']);
 			$success = False;
@@ -175,13 +217,6 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 				$success = False;
 			}
 		}
-	}
-
-	function handleDisplayUsersRequest() 
-	{
-    global $db_conn;
-    $result = executePlainSQL("SELECT * FROM User_table");
-    printUsersTable($result);
 	}
 
 	function connectToDB()
@@ -213,90 +248,369 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 		oci_close($db_conn);
 	}
 
+	// HANDLERS
+
+	// ERROR HANDLED
+	function handleDeleteDeviceRequest() 
+	{
+    global $db_conn;
+    echo "<br>Processing Delete<br/>";
+    
+    // Retrieve DeviceID from the form submission
+    $deviceID = $_POST['deleteDeviceID'];
+
+    // Check if the Device ID exists
+    $checkQuery = "SELECT COUNT(*) AS deviceCount FROM Device WHERE DeviceID = $deviceID";
+    $checkTuple = array(":DeviceID" => $deviceID);
+    $checkResult = executePlainSQL($checkQuery, array($checkTuple));
+
+    // Check if the check query execution was successful
+    if (!$checkResult) {
+        echo "<br>Error: This Device Does not exist.<br/>";
+        return;
+    }
+
+    // Fetch the result row
+    $checkRow = oci_fetch_assoc($checkResult);
+    $deviceCount = $checkRow['DEVICECOUNT'];
+
+    if ($deviceCount == 0) {
+        echo "<br> Device with ID " . $deviceID . " does not exist. <br>";
+        return;
+    }
+
+    // Prepare the SQL statement for deletion
+    $deleteQuery = "DELETE FROM Device WHERE DeviceID = :DeviceID";
+    $deleteTuple = array(":DeviceID" => $deviceID);
+
+    // Execute the deletion query
+    $deleteResult = executeBoundSQL($deleteQuery, array($deleteTuple));
+
+    if ($deleteResult) {
+        // Notify the user of successful deletion
+        echo "<br> Device with ID " . $deviceID . " has been deleted successfully. <br>";
+    }
+
+	echo "Device Deleted Successfully";
+
+    oci_commit($db_conn);
+	}
+
+	// NO ERROR HANDLING
 	function handleUpdateRequest()
 	{
 		global $db_conn;
 
-		$old_name = $_POST['oldName'];
-		$new_name = $_POST['newName'];
+		echo "Processing Update";
 
-		// you need the wrap the old name and new name values with single quotations
-		executePlainSQL("UPDATE demoTable SET name='" . $new_name . "' WHERE name='" . $old_name . "'");
-		oci_commit($db_conn);
+            $tuple = array (
+                ":UserID" => $_POST['updateUserID'],
+                ":Email" => $_POST['updateEmail'],
+                ":UserWeight" => $_POST['updateWeight'],
+            );
+
+            $alltuples = array (
+                $tuple
+            );
+
+			
+
+			// echo "<br>RESULT BEFORE UPDATE:</br>";
+			// printUpdateRequestResult();
+
+			executeBoundSQL("
+				UPDATE User_table U
+				SET U.Email = :Email, U.UserWeight = :UserWeight
+				WHERE U.UserID = :UserID
+				
+			", $alltuples);
+
+			// echo "<br>RESULT AFTER UPDATE:</br>";
+			// printUpdateRequestResult();
+            
+            oci_commit($db_conn);
 	}
 
-	function handleResetRequest()
-	{
-		global $db_conn;
-		// Drop old table
-		executePlainSQL("DROP TABLE demoTable");
-
-		// Create new table
-		echo "<br> creating new table <br>";
-		executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
-		oci_commit($db_conn);
-	}
-
+	// NO ERROR HANDLING
 	function handleInsertRequest()
 	{
 		global $db_conn;
 
 		//Getting the values from user and insert data into the table
 		$tuple = array (
+			":DeviceID" => $_POST['insertDeviceID'],
             ":UserID" => $_POST['insertUserID'],
-            ":Age" => $_POST['insertAge'],
-            ":Gender" => $_POST['insertGender'],
+            ":Calories" => $_POST['insertCalories'],
+			":inputDate" => $_POST['insertDate'],
         );
 
-		$alltuples = array(
+		$alltuples = array (
 			$tuple
 		);
 
+		if (!doesForeignKeyExist('User_table', 'UserID', $tuple[":UserID"])) {
+			echo "Error: No such User ID found.";
+			return;
+		}
+
+		if (!doesForeignKeyExist('Device', 'DeviceID', $tuple[":DeviceID"])) {
+			echo "Error: No such Device ID found.";
+			return;
+		}
+
+		$nutritionTable = executePlainSQL("SELECT * FROM NUTRITIONINPUTS ORDER BY NutritionID");
+		
+
 		echo "<br>User_table BEFORE INSERT:</br>";
-        printInsertRequestResult();
+        printResult($nutritionTable);
 
 		executeBoundSQL("
-            INSERT INTO User_table (
+            INSERT INTO NutritionInputs (
+                NutritionID,
+                DeviceID,
                 UserID,
-                Age,
-                Gender
+				Calories,
+				NutritionInputsDate
             )
             VALUES (
+				NutritionID_seq.NEXTVAL,
+                :DeviceID,
                 :UserID,
-                :Age,
-                :Gender
+                :Calories,
+				:inputDate)
             ",
         $alltuples);
 
 		echo "<br>User_table AFTER INSERT:</br>";
-        printInsertRequestResult();
+		$nutritionTable1 = executePlainSQL("SELECT * FROM NUTRITIONINPUTS ORDER BY NutritionID");
+		printResult($nutritionTable1);
 
 
 		oci_commit($db_conn);
 	}
 
-	function handleCountRequest()
+	// ERROR HANDLED
+	function handleAggregateCaloriesRequest() 
 	{
+		echo "Aggregate Processing<br>";
 		global $db_conn;
 
-		$result = executePlainSQL("SELECT Count(*) FROM User_table");
+		$aggregationType = $_POST['aggregationType'];
+		$query = "SELECT UserID, {$aggregationType}(Calories) AS Aggregated_Calories FROM NutritionInputs GROUP BY UserID ORDER BY Aggregated_Calories DESC";
 
-		if (($row = oci_fetch_row($result)) != false) {
-			echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
+		$result = executePlainSQL($query);
+		printResult($result);
+
+		echo "Aggregate completed Successfully<br>";
+	}
+
+	// ERROR HANDLED
+	function handleMultiDeviceUsersRequest() 
+	{
+		global $db_conn;
+		
+		echo "User with multiple devices Processing<br>";
+	
+		$query = "SELECT UserID, COUNT(DISTINCT DeviceID) AS DeviceCount
+				  FROM NutritionInputs
+				  GROUP BY UserID
+				  HAVING COUNT(DISTINCT DeviceID) > 1";
+	
+		$result = executePlainSQL($query);
+
+		printResult($result);
+		echo "User with multiple devices completed successfully<br>";
+	}
+	
+	// ERROR HANDLED EXCEPT ATTRIBUTES
+	function handleDisplayRequest()
+	{
+    	global $db_conn;
+    	echo "Projection Processing<br>";
+
+   		if (isset($_POST['tableName'])) {
+        $tableName = $_POST['tableName'];
+        $attributes = $_POST['attributes'];
+
+        
+        if (!doesTableExist($tableName)) {
+            echo "Error: Table '{$tableName}' does not exist in the database. <br>";
+            return;
+        }
+
+        $sql = "";
+
+        if (!empty($attributes)) {
+            $sql = "SELECT {$attributes} FROM {$tableName}";
+        } else {
+            $sql = "SELECT * FROM {$tableName}";
+        }
+
+        $result = executePlainSQL($sql);
+
+        // Check if result is not null before printing
+        if ($result) {
+            
+            printResult($result);
+        } else {
+            // Handle case when result is null
+            echo "No data found for table: " . $tableName;
+        }
+    	} else {
+        // Handle case when tableName is not set in POST
+        echo "Table Name not provided. <br>";
+    	}
+
+		echo "Projection Completed Successfully <br>";
+	}
+
+	// ERROR HANDLED
+	// function getTableColumns($tableName)
+	// {
+   	// 	global $db_conn;
+    // 	$columns = array();
+
+	// 	$upperName = strtoupper($tableName);
+
+    // 	// Query to get column names for the given table
+    // 	$sql = "SELECT column_name FROM all_tab_columns WHERE table_name = :tableName";
+    // 	$statement = oci_parse($db_conn, $sql);
+    // 	oci_bind_by_name($statement, ":tableName", $upperName);
+    // 	oci_execute($statement);
+
+    // 	// Fetch column names and store them in an array
+    // 	while ($row = oci_fetch_assoc($statement)) {
+    //    		$columns[] = $row['COLUMN_NAME'];
+    // 	}
+
+    // 	return $columns;
+	// }
+	
+	// ERROR HANDLED
+	function handleSelectRequest() 
+	{
+		global $db_conn;
+	
+		// Check if form is submitted
+		if (isset($_POST['selectSubmit'])) {
+			$userID = $_POST['userSelect'];
+	
+			// Validate User ID
+			if (empty($userID)) {
+				echo "Please provide a User ID.";
+				return;
+			}
+	
+			$calories = $_POST['caloriesSelect'];
+			$date = $_POST['dateSelect'];
+			$operator = $_POST['caloriesOperator'];
+	
+			// Define attribute names and corresponding table names
+			$tuple = array(
+				":Calories" => $_POST['caloriesSelect'],
+				":Date" => $_POST['dateSelect'],
+			);
+	
+			$alltuples = array(
+				$tuple
+			);
+	
+			// Formulate SQL query
+			if ($operator == 'AND') {
+				$sql = "SELECT IM.UserID, IM.Result, IM.InsightMonitorsDate, NI.Calories 
+						FROM InsightMonitors IM, NutritionInputs NI
+						WHERE IM.UserID = $userID AND NI.UserID = IM.UserID AND NI.Calories = $calories AND IM.InsightMonitorsDate = TO_DATE('$date', 'DD-MON-YYYY')
+						";
+			} else {
+				$sql = "SELECT IM.UserID, IM.Result, IM.InsightMonitorsDate, NI.Calories 
+						FROM InsightMonitors IM, NutritionInputs NI
+						WHERE IM.UserID = $userID AND NI.UserID = IM.UserID AND (NI.Calories = $calories OR IM.InsightMonitorsDate = TO_DATE('$date', 'DD-MON-YYYY'))
+						";
+			}
+	
+			// Execute SQL query
+			$result = executePlainSQL($sql);
+	
+			// Check if result is not null before printing
+			if ($result) {
+				// Call printResult function
+				printResult($result);
+			} else {
+				// Handle case when result is null
+				echo "No insights found based on the specified conditions.";
+			}
+		} else {
+			// Handle case when form is not submitted
+			echo "Filtering conditions not provided.";
 		}
 	}
 
-	function handleDisplayRequest()
+	// ERROR HANDLED: IF NO USERS ADD ERROR
+	function handleJoinRequest() 
 	{
-		global $db_conn;
-		$result = executePlainSQL("SELECT * FROM User_table");
-		printUsersTable($result);
-	}
+    	global $db_conn;
 
-	// HANDLE ALL POST ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
+		echo "Join Processing";
+
+    	$tuple = array(
+    	    ":Bedtime" => $_POST['bedtimeJoin']
+    	);
+
+		$bedtime = $_POST['bedtimeJoin'];
+
+   		$alltuples = array(
+    	$tuple
+    	);
+
+    	$result = "
+		SELECT U.Email, U.Age, S.Bedtime
+		FROM Sleep S, GenerateData GD, User_table U, NutritionInputs NI
+		WHERE U.UserID = NI.UserID AND  NI.DeviceID = GD.DeviceID 
+		AND GD.SleepID = S.SleepID AND S.Bedtime = $bedtime";
+
+    	$resultResource = executePlainSQL($result);
+
+		if ($resultResource) {
+        	printResult($resultResource);
+			
+    	} else {
+        	echo "Error: No results found.";
+    	}
+
+    	oci_commit($db_conn);
+
+		echo "Completed Join Successfully<br>";
+		}
+	
+	// ERROR HANDLED
+	function handleDivisionRequest()
+	{
+		global $db_conn; // Assume this is your database connection variable
+
+    	echo "Division Processing<br>";
+
+    	// The SQL query
+    	$sql = "
+        SELECT U.UserID
+        FROM User_table U
+        WHERE NOT EXISTS (
+            (SELECT G.goalDescription FROM Goals G)
+            MINUS
+            (SELECT G.goalDescription 
+             FROM NutritionInputs NI
+             JOIN GenerateData GD ON NI.DeviceID = GD.DeviceID
+             JOIN Goals G ON GD.GoalsID = G.GoalsID
+             WHERE NI.UserID = U.UserID))
+    	";
+
+    	$result = executePlainSQL($sql);
+		printResult($result);
+		echo "Division Completed Successfully";
+	} 
+
 	function handlePOSTRequest()
 	{
+		// echo "handlePOSTRequest called<br>";
 		if (connectToDB()) {
 			if (array_key_exists('resetTablesRequest', $_POST)) {
 				handleResetRequest();
@@ -304,53 +618,115 @@ $show_debug_alert_messages = False; // show which methods are being triggered (s
 				handleUpdateRequest();
 			} else if (array_key_exists('insertQueryRequest', $_POST)) {
 				handleInsertRequest();
+			} else if (array_key_exists('aggregateCaloriesRequest', $_POST)){
+				handleAggregateCaloriesRequest();
+			} else if (array_key_exists('multiDeviceUsersRequest', $_POST)){
+				handleMultiDeviceUsersRequest();
+			} else if (array_key_exists('displayQueryRequest', $_POST)) {
+				handleDisplayRequest();
+			} else if (array_key_exists('selectQueryRequest', $_POST)) {
+				handleSelectRequest();
+			} elseif (array_key_exists('deleteDeviceRequest', $_POST)) {
+				handleDeleteDeviceRequest();
+			} elseif (array_key_exists('joinQueryRequest', $_POST)) {
+				handleJoinRequest();
 			}
 
 			disconnectFromDB();
 		}
 	}
 
-	// HANDLE ALL GET ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
 	function handleGETRequest()
 	{
 		if (connectToDB()) {
 			if (array_key_exists('countTuples', $_GET)) {
 				handleCountRequest();
-			} elseif (array_key_exists('displayTuples', $_GET)) {
-				handleDisplayRequest();
-			}
+			 } elseif (array_key_exists('divisionQueryRequest', $_GET)) {
+				handleDivisionRequest();
+		}
 
 			disconnectFromDB();
 		}
 	}
 
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
-		handlePOSTRequest();
-	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
-		handleGETRequest();
+	// HELPERS
+
+	// FOR PROJECTION HANDLER
+	function doesTableExist($tableName) {
+		global $db_conn;
+		
+		$upperTableName = strtoupper($tableName);
+		$sql = "SELECT COUNT(*) FROM user_tables WHERE table_name = :tableName";
+		$statement = oci_parse($db_conn, $sql);
+		oci_bind_by_name($statement, ":tableName", $upperTableName);
+	
+		oci_execute($statement);
+	
+		
+		$row = oci_fetch_array($statement);
+		if ($row) {
+			return $row[0] > 0;
+		}
+		return false; 
 	}
 
-	// End PHP parsing and send the rest of the HTML content
-	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+	// FOR INSERT HANDLER
+	function doesForeignKeyExist($tableName, $columnName, $value) 
+	{
+			global $db_conn;
+	
+			// Prepare the SQL query to check the existence of the key
+			$sql = "SELECT COUNT(*) FROM " . $tableName . " WHERE " . $columnName . " = :value";
+	
+			$statement = oci_parse($db_conn, $sql);
+			oci_bind_by_name($statement, ":value", $value);
+	
+			// Execute the query
+			oci_execute($statement, OCI_DEFAULT);
+	
+			// Fetch the result
+			if ($row = oci_fetch_array($statement)) {
+				// If count is more than 0, the foreign key exists
+				return $row[0] > 0;
+			}
+			return false; // In case the query fails or count is 0
+	}
+
+	function printResult($result) 
+	{
+		echo "<h2>Displaying Results</h2>";
+		echo "<table border='1'>";
+	
+		// Fetch column names
+		echo "<tr>";
+		$numCols = oci_num_fields($result);
+		for ($i = 1; $i <= $numCols; $i++) {
+			$colName = oci_field_name($result, $i);
+			echo "<th>{$colName}</th>";
+		}
+		echo "</tr>";
+	
+		// Fetch and print rows
+		while ($row = oci_fetch_array($result, OCI_ASSOC)) {
+			echo "<tr>";
+			foreach ($row as $col) {
+				echo "<td>{$col}</td>";
+			}
+			echo "</tr>";
+		}
+	
+		echo "</table> <br>";
+	}
+
+	// Handler Fetcher
+	if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['submitAggregate']) 
+	|| isset($_POST['submitMultiDeviceUsers']) || isset($_POST['displaySubmit']) || isset($_POST['selectSubmit']) || isset($_POST['deleteSubmit']) 
+	|| isset($_POST['joinSubmit'])) {
 		handlePOSTRequest();
-	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest'])) {
+	} else if (isset($_GET['countTupleRequest']) || isset($_GET['displayTuplesRequest']) || isset($_GET['divisionSubmit'])) {
 		handleGETRequest();
 	} else if (isset($_GET['displayUsersRequest'])) {
 		handleDisplayUsersRequest();
-	}
-	
-	function printUsersTable($result)
-	{
-		echo "<h2>Displaying Users</h2>";
-		echo "<table border='1'>";
-		echo "<tr><th>User ID</th><th>Age</th><th>Gender</th></tr>";
-	
-		while ($row = OCI_Fetch_Array($result, OCI_ASSOC)) {
-			echo "<tr><td>" . $row["USERID"] . "</td><td>" . $row["AGE"] . "</td><td>" . $row["GENDER"] . "</td></tr>"; 
-		}
-	
-		echo "</table>";
 	}
 
 	?>
