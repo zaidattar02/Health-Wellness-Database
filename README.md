@@ -1,5 +1,3 @@
-## Health & Fitness Tracking Device README
-
 ### Brief Project Description
 **Domain**: The application revolves around a health & fitness tracking device that allows users to track statistical data related to sleep, physical activity, and recovery. The focus lies on the device's collected statistical data and user engagement.
 
@@ -13,3 +11,8 @@
 
 **Expected Technology Stack**:
 - **Programming Languages**: Java and PHP.
+
+**Instructions To Use**
+- First start the initDB.sql script in sqlplus by entering the following command, 'start initDB.sql'.
+- Once the tables have all been created, quit sqlplus then set the approriate permissions for the ui.php file
+- Enjoy :)
